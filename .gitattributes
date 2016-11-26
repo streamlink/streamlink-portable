@@ -1,0 +1,6 @@
+*.txt         eol=crlf
+*.bat       eol=crlf
+*.sln       eol=crlf
+*.vb       eol=crlf
+*.vbproj       eol=crlf
+*.md       eol=crlf
