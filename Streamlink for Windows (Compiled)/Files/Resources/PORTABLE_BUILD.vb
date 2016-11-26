@@ -41,8 +41,14 @@ Module Module1
             End If
         End If
 
-        Console.WriteLine("[Streamlink for Windows]")
-        Dim info = New ProcessStartInfo(Chr(34) & url_trabajo_app & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & url_trabajo_app & "\Streamlink\streamlink-script.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & url_trabajo_app & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " " & argumentos_finales)
+        Dim DATOS_VER_ACTUAL As String = url_trabajo_app & "\VERSION.txt"
+        If IO.File.Exists(DATOS_VER_ACTUAL) Then
+            DATOS_VER_ACTUAL = IO.File.ReadAllText(DATOS_VER_ACTUAL, Encoding.UTF8)
+            Console.WriteLine("[Streamlink for Windows " & DATOS_VER_ACTUAL & "]")
+        Else
+            Console.WriteLine("[Streamlink for Windows]")
+        End If
+        Dim info = New ProcessStartInfo(Chr(34) & url_trabajo_app & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & url_trabajo_app & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & url_trabajo_app & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " " & argumentos_finales)
         info.UseShellExecute = False
         Dim proc = Process.Start(info)
         proc.WaitForExit()

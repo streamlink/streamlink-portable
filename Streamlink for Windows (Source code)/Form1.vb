@@ -150,16 +150,18 @@ Public Class Form1
 
                 Button2.Text = "Loading (1/1)"
 
-                BorrarDirectorioSiExiste("Files\TEMP")
+                'BorrarDirectorioSiExiste("Files\TEMP")
                 IO.Directory.CreateDirectory("Files\TEMP")
 
+                Dim nueva_version_disponible As Boolean = True
                 Dim strlk_url As String = "https://github.com/streamlink/streamlink/archive/master.zip"
                 VERSION_ACTUAL = ObtenerETAG_HTTPHEADER(strlk_url)
 
                 If IO.Directory.Exists("Releases") Then
                     If IO.File.Exists("Releases\VERSION.txt") Then
                         Dim vers_check As String = IO.File.ReadAllText("Releases\VERSION.txt")
-                        If vers_check = VERSION_ACTUAL Then
+                        If vers_check.Contains(VERSION_ACTUAL.Remove(7)) Then
+                            nueva_version_disponible = False
                             Dim result As Integer = Msgbox_Interactive_THREADSAFE("It looks like you already have the latest version." & vbNewLine & "Continue anyway?", "Notice", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                             If result = DialogResult.Yes Then
                                 'El usuario acepto actualizar de todas formas
@@ -171,7 +173,19 @@ Public Class Form1
                     End If
                 End If
 
-                Descargador_HTML.DownloadFile(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+                Dim redescargar_latest_streamlink_zip As Boolean = True
+                If nueva_version_disponible = False And IO.File.Exists("Files\TEMP\Streamlink_Latest_MD5.txt") And IO.File.Exists("Files\TEMP\Streamlink_Latest.zip") Then
+                    Dim md5_anterior As String = IO.File.ReadAllText("Files\TEMP\Streamlink_Latest_MD5.txt", Encoding.UTF8)
+                    Dim md5_actual As String = getFileMd5("Files\TEMP\Streamlink_Latest.zip")
+                    If md5_anterior = md5_actual Then
+                        redescargar_latest_streamlink_zip = False
+                    End If
+                End If
+                If redescargar_latest_streamlink_zip = True Then
+                    BorrarDirectorioSiExiste("Files\TEMP")
+                    IO.Directory.CreateDirectory("Files\TEMP")
+                    Descargador_HTML.DownloadFile(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+                End If
 
                 Button2.Text = "Completed"
                 Button3.Text = "Start building"
@@ -207,27 +221,16 @@ Public Class Form1
                 BorrarDirectorioSiExiste("Files\TEMP\streamlink-master\src")
                 BorrarDirectorioSiExiste("Files\TEMP\streamlink-master\win32")
 
+                For Each barrido_post_extract_file As String In Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly).Where(Function(s) s.ToLower.EndsWith(".ico")) 'OrElse s.EndsWith(".png"))
+                    IO.File.Delete(barrido_post_extract_file)
+                Next
+
                 Dim argparser_py_location As String = "Files\TEMP\streamlink-master\streamlink_cli\argparser.py"
                 Dim argparser_py As String = IO.File.ReadAllText(argparser_py_location, Encoding.UTF8)
-                Dim argparser_py_replace As String = "usage='%(prog)s [OPTIONS] [URL] [STREAM]',".Replace("'", Chr(34))
-                Dim argparser_py_replace_end As String = "usage='streamlink.exe [OPTIONS] [URL] [STREAM]',".Replace("'", Chr(34))
+                Dim argparser_py_replace As String = "%(prog)s"
+                Dim argparser_py_replace_end As String = "Streamlink.exe"
                 argparser_py = argparser_py.Replace(argparser_py_replace, argparser_py_replace_end)
                 IO.File.WriteAllText(argparser_py_location, argparser_py, Encoding.UTF8)
-
-                'Dim constants_py_location As String = "Files\TEMP\streamlink-master\streamlink_cli\constants.py"
-                'Dim constants_py As String = IO.File.ReadAllText(constants_py_location, Encoding.UTF8)
-                'Dim constants_py_replace As String = "CONFIG_FILES = [os.path.join(APPDATA, 'streamlink', 'streamlinkrc')]".Replace("'", Chr(34))
-                'Dim constants_py_replace_end As String = "CONFIG_FILES = [os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'streamlinkrc')]".Replace("'", Chr(34))
-                'constants_py = constants_py.Replace(constants_py_replace, constants_py_replace_end)
-                'IO.File.WriteAllText(constants_py_location, constants_py, Encoding.UTF8)
-
-                'Dim rtmpdump_py_location As String = "Files\TEMP\streamlink-master\streamlink\stream\rtmpdump.py"
-                'Dim rtmpdump_py As String = IO.File.ReadAllText(rtmpdump_py_location, Encoding.UTF8)
-                'Dim rtmpdump_py_replace As String = "self.cmd = self.session.options.get('rtmp-rtmpdump')".Replace("'", Chr(34))
-                'Dim rtmpdump_py_replace_end As String = "self.cmd = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 'rtmpdump', 'rtmpdump.exe')".Replace("'", Chr(34))
-                'rtmpdump_py = rtmpdump_py.Replace(rtmpdump_py_replace, rtmpdump_py_replace_end)
-                'rtmpdump_py = "import os" & vbNewLine & rtmpdump_py
-                'IO.File.WriteAllText(rtmpdump_py_location, rtmpdump_py, Encoding.UTF8)
 
                 ruta_comprimido = Chr(34) & url_trabajo_app & "\Files\Resources\Streamlink_Patches.zip" & Chr(34)
                 destino_comprimido = Chr(34) & url_trabajo_app & "\Files\TEMP\streamlink-master" & Chr(34)
@@ -236,6 +239,9 @@ Public Class Form1
                 Button3.Text = "Loading (2/3)"
 
                 Finalizar_Todos_Los_EXE("Releases")
+                If IO.File.Exists("Releases\streamlinkrc") Then
+                    IO.File.Copy("Releases\streamlinkrc", "Files\TEMP\streamlinkrc_BACKUP")
+                End If
                 BorrarDirectorioSiExiste("Releases")
                 IO.Directory.CreateDirectory("Releases\Python 3.5.2")
 
@@ -250,7 +256,6 @@ Public Class Form1
 
                 Dim README_CONTENT As String = "Usage from cmd:" & vbNewLine & "Streamlink.exe ARGUMENTS" & vbNewLine & vbNewLine & "For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io"
                 IO.File.WriteAllText("Releases\README.txt", README_CONTENT)
-                IO.File.WriteAllText("Releases\VERSION.txt", VERSION_ACTUAL)
 
                 RELEASE_VER_ACTUAL = "Releases\Streamlink\streamlink\__init__.py"
                 If IO.File.Exists(RELEASE_VER_ACTUAL) Then
@@ -264,6 +269,14 @@ Public Class Form1
                 Else
                     RELEASE_VER_ACTUAL = ""
                 End If
+
+                Dim version_txt_out As String = ""
+                If String.IsNullOrEmpty(RELEASE_VER_ACTUAL) Then
+                    version_txt_out = "Git " & VERSION_ACTUAL.Remove(7)
+                Else
+                    version_txt_out = "v" & RELEASE_VER_ACTUAL & " - Git " & VERSION_ACTUAL.Remove(7)
+                End If
+                IO.File.WriteAllText("Releases\VERSION.txt", version_txt_out)
 
                 If IO.File.Exists("Releases\Streamlink\streamlinkrc") Then
                     Dim textbox_analisis_streamlinkrc As New TextBox
@@ -283,7 +296,7 @@ Public Class Form1
                     IO.File.Delete("Releases\Streamlink\streamlinkrc")
                 End If
 
-                If Button1.Text = "Portable EXE" Then
+                    If Button1.Text = "Portable EXE" Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
                     BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
                     BorrarArchivoSiExiste("Releases\TEMP_COMPILE.vb")
@@ -306,14 +319,24 @@ Public Class Form1
 
                 End If
 
-                'BorrarDirectorioSiExiste("Files\TEMP")
-                Desbloquear_Todos_Los_EXE("Releases")
+                If IO.File.Exists("Files\TEMP\streamlinkrc_BACKUP") Then
+                    FileSystem.Rename("Releases\streamlinkrc", "Releases\streamlinkrc_ORIGINAL")
+                    IO.File.Move("Files\TEMP\streamlinkrc_BACKUP", "Releases\streamlinkrc")
+                    If getFileMd5("Releases\streamlinkrc") = getFileMd5("Releases\streamlinkrc_ORIGINAL") Then
+                        IO.File.Delete("Releases\streamlinkrc_ORIGINAL")
+                    End If
+                End If
+
+                    'BorrarDirectorioSiExiste("Files\TEMP")
+                    Desbloquear_Todos_Los_EXE("Releases")
+
+                IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_MD5.txt", getFileMd5("Files\TEMP\Streamlink_Latest.zip"), Encoding.UTF8)
 
                 Button3.Text = "Completed"
 
                 Dim release_version_show As String = RELEASE_VER_ACTUAL
                 If String.IsNullOrEmpty(release_version_show) Then
-                    release_version_show = VERSION_ACTUAL.Remove(6)
+                    release_version_show = VERSION_ACTUAL.Remove(7)
                 Else
                     release_version_show = RELEASE_VER_ACTUAL & " (with the latest commits)"
                 End If
@@ -326,6 +349,20 @@ Public Class Form1
         End If
 
     End Sub
+
+    Private Function getFileMd5(ByVal filePath As String) As String
+        ' get all the file contents
+        Dim File() As Byte = System.IO.File.ReadAllBytes(filePath)
+
+        ' create a new md5 object
+        Dim Md5 As New MD5CryptoServiceProvider()
+
+        ' compute the hash
+        Dim byteHash() As Byte = Md5.ComputeHash(File)
+
+        ' return the value in base 64 
+        Return Convert.ToBase64String(byteHash)
+    End Function
 
 
     Function Finalizar_Todos_Los_EXE(ByVal ruta As String)
@@ -576,6 +613,8 @@ Public Class Form1
         If PROYECTO_SOLICITADO = "STANDALONE_EXE" Then
             cp.EmbeddedResources.Add("Releases\STREAMLINK_RELEASE.zip")
             cp.EmbeddedResources.Add("Releases\VERSION.txt")
+            IO.File.WriteAllText("Releases\RANDOM_ID.txt", New RandomPassword().Generate(20))
+            cp.EmbeddedResources.Add("Releases\RANDOM_ID.txt")
         End If
         '
 

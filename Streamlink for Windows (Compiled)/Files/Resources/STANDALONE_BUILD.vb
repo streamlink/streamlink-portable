@@ -50,6 +50,11 @@ Module Module1
             End If
 
             Dim requiere_extraccion As Boolean = True
+            Dim RANDOM_ID_ACTUAL As String = ""
+
+            If IO.Directory.Exists(temp_patch_rtv) = False Then
+                IO.Directory.CreateDirectory(temp_patch_rtv) 'Asegurar existencia del directorio
+            End If
 
             If IO.Directory.Exists(temp_patch_rtv) Then
                 Dim temp_ver_anterior As String = temp_patch_rtv & "\VERSION.txt"
@@ -58,12 +63,31 @@ Module Module1
                 Dim _assembly As [Assembly] = [Assembly].GetExecutingAssembly()
                 Dim _filestream As Stream = _assembly.GetManifestResourceStream("VERSION.txt")
                 CopyStream(_filestream, temp_ver_embed)
-                If IO.File.ReadAllText(temp_ver_anterior, Encoding.UTF8) = IO.File.ReadAllText(temp_ver_embed, Encoding.UTF8) Then
-                    requiere_extraccion = False
+                If IO.file.exists(temp_ver_anterior) Then
+                    If IO.File.ReadAllText(temp_ver_anterior, Encoding.UTF8) = IO.File.ReadAllText(temp_ver_embed, Encoding.UTF8) Then
+                        requiere_extraccion = False
+                    End If
                 End If
-            End If
+                Dim temp_random_id_anterior As String = temp_patch_rtv & "\RANDOM_ID.txt"
+                Dim temp_random_id_embed As String = temp_patch_rtv & "\RANDOM_ID_EMBED.txt"
+                    BorrarArchivoSiExiste(temp_random_id_embed)
+                    Dim _assembly2 As [Assembly] = [Assembly].GetExecutingAssembly()
+                Dim _filestream2 As Stream = _assembly2.GetManifestResourceStream("RANDOM_ID.txt")
+                CopyStream(_filestream2, temp_random_id_embed)
+                RANDOM_ID_ACTUAL = IO.File.ReadAllText(temp_random_id_embed, Encoding.UTF8)
+                    If IO.File.Exists(temp_random_id_anterior) Then
+                        If IO.File.ReadAllText(temp_random_id_anterior, Encoding.UTF8) = IO.File.ReadAllText(temp_random_id_embed, Encoding.UTF8) Then
+                            requiere_extraccion = False
+                        Else
+                            requiere_extraccion = True
+                        End If
+                    Else
+                        requiere_extraccion = True
+                    End If
 
-            If requiere_extraccion = True Then
+                End If
+
+                If requiere_extraccion = True Then
                 Console.WriteLine("[Streamlink] Extracting program ...")
                 Finalizar_Todos_Los_EXE(temp_patch_rtv)
                 BorrarDirectorioSiExiste(temp_patch_rtv)
@@ -75,15 +99,23 @@ Module Module1
                 IO.File.Delete(temp_zip_patch_rtv)
                 Desbloquear_Todos_Los_EXE(temp_patch_rtv) 'Intentar desbloquear ruta temporal de Streamlink
                 Console.WriteLine("[Streamlink] Program successfully extracted")
+                IO.File.WriteAllText(temp_patch_rtv & "\RANDOM_ID.txt", RANDOM_ID_ACTUAL, Encoding.UTF8)
             End If
-            Console.WriteLine("[Streamlink for Windows]")
-            Dim info = New ProcessStartInfo(Chr(34) & temp_patch_rtv & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & temp_patch_rtv & "\Streamlink\streamlink-script.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & temp_patch_rtv & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " " & argumentos_finales)
+
+            Dim DATOS_VER_ACTUAL As String = temp_patch_rtv & "\VERSION.txt"
+            If IO.File.Exists(DATOS_VER_ACTUAL) Then
+                DATOS_VER_ACTUAL = IO.File.ReadAllText(DATOS_VER_ACTUAL, Encoding.UTF8)
+                Console.WriteLine("[Streamlink for Windows " & DATOS_VER_ACTUAL & "]")
+            Else
+                Console.WriteLine("[Streamlink for Windows]")
+            End If
+            Dim info = New ProcessStartInfo(Chr(34) & temp_patch_rtv & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & temp_patch_rtv & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & temp_patch_rtv & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " " & argumentos_finales)
             info.UseShellExecute = False
             Dim proc = Process.Start(info)
             proc.WaitForExit()
             Console.WriteLine("[End of Streamlink for Windows]")
         Catch ex As Exception
-            Console.WriteLine("An error occurred :(")
+            Console.WriteLine("[Streamlink] An error occurred")
         End Try
         'Threading.Thread.Sleep(Threading.Timeout.Infinite)
     End Sub
