@@ -114,6 +114,7 @@ Module Module1
             Dim proc = Process.Start(info)
             proc.WaitForExit()
             Console.WriteLine("[End of Streamlink for Windows]")
+            Environment.Exit(Proc.ExitCode)
         Catch ex As Exception
             Console.WriteLine("[Streamlink] An error occurred")
         End Try
