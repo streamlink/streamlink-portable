@@ -54,6 +54,7 @@ Module Module1
         proc.WaitForExit()
         'Threading.Thread.Sleep(Threading.Timeout.Infinite)
         Console.WriteLine("[End of Streamlink for Windows]")
+        Environment.Exit(Proc.ExitCode)
     End Sub
 
     Public Function ControlHandler(ByVal ctrlType As CtrlTypes) As Boolean
