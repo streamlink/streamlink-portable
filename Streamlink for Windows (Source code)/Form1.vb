@@ -6,6 +6,7 @@ Imports System.Runtime.InteropServices
 Imports System.Security.Cryptography
 Imports System.CodeDom.Compiler
 Imports System.Text
+Imports System.Security
 
 Public Class Form1
     Public Shared CodeDomProvider As CodeDomProvider = CodeDomProvider.CreateProvider("VB")
@@ -29,7 +30,7 @@ Public Class Form1
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         Me.KeyPreview = True
-        Me.Icon = Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location) 'El icono sera el mismo que el de la aplicacion
+        Me.Icon = ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location) 'El icono sera el mismo que el de la aplicacion
         Me.DoubleBuffered = True 'Evitar que ocurra flickering en la UI
         Me.ClientSize = Panel2.ClientSize
         Me.CenterToScreen()
@@ -296,7 +297,7 @@ Public Class Form1
                     IO.File.Delete("Releases\Streamlink\streamlinkrc")
                 End If
 
-                    If Button1.Text = "Portable EXE" Then
+                If Button1.Text = "Portable EXE" Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
                     BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
                     BorrarArchivoSiExiste("Releases\TEMP_COMPILE.vb")
@@ -327,8 +328,8 @@ Public Class Form1
                     End If
                 End If
 
-                    'BorrarDirectorioSiExiste("Files\TEMP")
-                    Desbloquear_Todos_Los_EXE("Releases")
+                'BorrarDirectorioSiExiste("Files\TEMP")
+                Desbloquear_Todos_Los_EXE("Releases")
 
                 IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_MD5.txt", getFileMd5("Files\TEMP\Streamlink_Latest.zip"), Encoding.UTF8)
 
@@ -651,6 +652,41 @@ Public Class Form1
         Panel2.Select()
     End Sub
 
+    Public Shared Function ExtractAssociatedIcon(filePath As [String]) As Icon
+        Dim index As Integer = 0
+
+        Dim uri As Uri
+        If filePath Is Nothing Then
+            Throw New ArgumentException([String].Format("'{0}' is not valid for '{1}'", "null", "filePath"), "filePath")
+        End If
+        Try
+            uri = New Uri(filePath)
+        Catch generatedExceptionName As UriFormatException
+            filePath = Path.GetFullPath(filePath)
+            uri = New Uri(filePath)
+        End Try
+        'if (uri.IsUnc)
+        '{
+        '  throw new ArgumentException(String.Format("'{0}' is not valid for '{1}'", filePath, "filePath"), "filePath");
+        '}
+        If uri.IsFile Then
+            If Not File.Exists(filePath) Then
+                'IntSecurity.DemandReadFileIO(filePath);
+                Throw New FileNotFoundException(filePath)
+            End If
+
+            Dim iconPath As New StringBuilder(260)
+            iconPath.Append(filePath)
+
+            Dim handle As IntPtr = SafeNativeMethods.ExtractAssociatedIcon(New HandleRef(Nothing, IntPtr.Zero), iconPath, index)
+            If handle <> IntPtr.Zero Then
+                'IntSecurity.ObjectFromWin32Handle.Demand();
+                Return Icon.FromHandle(handle)
+            End If
+        End If
+        Return Nothing
+    End Function
+
 End Class
 
 Public Class FileUnblocker
@@ -675,5 +711,14 @@ Public Class FileUnblocker
 
     Public Shared Function UnblockFile(fileName As String) As Boolean
         Return DeleteFile(fileName & Convert.ToString(":Zone.Identifier"))
+    End Function
+End Class
+
+<SuppressUnmanagedCodeSecurity>
+Friend NotInheritable Class SafeNativeMethods
+    Private Sub New()
+    End Sub
+    <DllImport("shell32.dll", EntryPoint:="ExtractAssociatedIcon", CharSet:=CharSet.Auto)>
+    Friend Shared Function ExtractAssociatedIcon(hInst As HandleRef, iconPath As StringBuilder, ByRef index As Integer) As IntPtr
     End Function
 End Class

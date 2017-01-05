@@ -22,7 +22,22 @@ Module Module1
         Try
             SetConsoleCtrlHandler(New HandlerRoutine(AddressOf ControlHandler), True)
             url_trabajo_app = url_trabajo_app.Replace("file:///", "")
+            url_trabajo_app = url_trabajo_app.Replace("file:\", "")
             url_trabajo_app = System.IO.Path.GetDirectoryName(url_trabajo_app)
+            url_trabajo_app = url_trabajo_app.Replace("file:///", "")
+            url_trabajo_app = url_trabajo_app.Replace("file:\", "")
+
+            Dim deteccion_path As String = url_trabajo_app.Remove(3)
+            deteccion_path = deteccion_path.Remove(0, 1)
+            deteccion_path = deteccion_path.Replace("/", "\")
+            If deteccion_path = ":\" = False And url_trabajo_app.StartsWith("\\") = False Then
+                If url_trabajo_app.StartsWith("\") Then
+                    url_trabajo_app = "\" & url_trabajo_app
+                Else
+                    url_trabajo_app = "\\" & url_trabajo_app
+                End If
+            End If
+
             Dim temp_patch_rtv As String = Path.GetTempPath & "\RTV_STREAMLINK_FOR_WINDOWS"
             Dim temp_zip_patch_rtv As String = temp_patch_rtv & "\STREAMLINK_RELEASE.zip"
             Try
