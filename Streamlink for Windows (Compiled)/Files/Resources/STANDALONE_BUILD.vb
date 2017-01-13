@@ -124,7 +124,7 @@ Module Module1
             Else
                 Console.WriteLine("[Streamlink for Windows]")
             End If
-            Dim info = New ProcessStartInfo(Chr(34) & temp_patch_rtv & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & temp_patch_rtv & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & temp_patch_rtv & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " " & argumentos_finales)
+            Dim info = New ProcessStartInfo(Chr(34) & temp_patch_rtv & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & temp_patch_rtv & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & temp_patch_rtv & "\Streamlink\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & temp_patch_rtv & "\Streamlink\ffmpeg\ffmpeg.exe" & Chr(34) & " " & argumentos_finales)
             info.UseShellExecute = False
             Dim proc = Process.Start(info)
             proc.WaitForExit()
