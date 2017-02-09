@@ -7,11 +7,13 @@ Imports System.Security.Cryptography
 Imports System.CodeDom.Compiler
 Imports System.Text
 Imports System.Security
+Imports System.Text.RegularExpressions
 
 Public Class Form1
     Public Shared CodeDomProvider As CodeDomProvider = CodeDomProvider.CreateProvider("VB")
     Public Shared url_trabajo_app As String = IO.Path.GetDirectoryName(Application.ExecutablePath)
     Dim WithEvents Descargador_HTML As New WebClient() 'Descargador de datos
+    Dim Descargador_HTML_ProgressActual As String = "0%"
     Dim UserAgent_1 As String = "Mozilla/5.0 (Android; Mobile; rv:30.0) Gecko/30.0 Firefox/30.0" 'Android (Mobile)
     Dim UserAgent_2 As String = "Dalvik/1.6.0 (Linux; U; Android 4.4.2; TegraNote-P1640 Build/KOT49H)" 'Android (Tablet)
     Dim UserAgent_3 As String = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0" 'Windows (Escritorio)
@@ -22,6 +24,8 @@ Public Class Form1
     '
 
     'Almacen de datos actuales
+    Dim URL_ZIP_ARCHIVE_ACTUAL As String = "https://github.com/streamlink/streamlink/archive/master.zip"
+    Dim DEPENDENCY_CHK_FINAL As String = ""
     Dim VERSION_ACTUAL As String = ""
     Dim RELEASE_VER_ACTUAL As String = ""
     '
@@ -114,12 +118,28 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+    Private Sub Button2_MouseUp(sender As Object, e As MouseEventArgs) Handles Button2.MouseUp
         Form1_Deactivate(Nothing, Nothing)
         If sender.Text = "Start downloading" Then
-            If BW_PASOS.IsBusy = False Then
-                BW_PASOS.RunWorkerAsync("PASO1")
+
+            If e.Button = MouseButtons.Left Then
+                If BW_PASOS.IsBusy = False Then
+                    BW_PASOS.RunWorkerAsync("PASO1")
+                End If
             End If
+
+            If e.Button = MouseButtons.Right Then
+                If BW_PASOS.IsBusy = False Then
+                    Dim URL_ZIP_TEMP_ARCHIVE As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_ACTUAL, Me)
+                    If String.IsNullOrWhiteSpace(URL_ZIP_TEMP_ARCHIVE) = False Then
+                        If URL_ZIP_TEMP_ARCHIVE.ToLower.StartsWith("http") Then
+                            URL_ZIP_ARCHIVE_ACTUAL = URL_ZIP_TEMP_ARCHIVE
+                            BW_PASOS.RunWorkerAsync("PASO1")
+                        End If
+                    End If
+                End If
+            End If
+
         End If
     End Sub
 
@@ -155,7 +175,7 @@ Public Class Form1
                 IO.Directory.CreateDirectory("Files\TEMP")
 
                 Dim nueva_version_disponible As Boolean = True
-                Dim strlk_url As String = "https://github.com/streamlink/streamlink/archive/master.zip"
+                Dim strlk_url As String = URL_ZIP_ARCHIVE_ACTUAL
                 VERSION_ACTUAL = ObtenerETAG_HTTPHEADER(strlk_url)
 
                 If IO.Directory.Exists("Releases") Then
@@ -185,7 +205,15 @@ Public Class Form1
                 If redescargar_latest_streamlink_zip = True Then
                     BorrarDirectorioSiExiste("Files\TEMP")
                     IO.Directory.CreateDirectory("Files\TEMP")
-                    Descargador_HTML.DownloadFile(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+                    'Descargador_HTML.DownloadFile(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+
+                    Descargador_HTML.DownloadFileTaskAsync(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+                    Do Until Descargador_HTML.IsBusy = False
+                        Threading.Thread.Sleep(500)
+                        Button2.Text = "Downloading (" & Descargador_HTML_ProgressActual & ")"
+                    Loop
+
+
                 End If
 
                 Button2.Text = "Completed"
@@ -205,6 +233,48 @@ Public Class Form1
                 BorrarDirectorioSiExiste("Files\TEMP\streamlink-master")
                 EjecutarYEsperar("Files\7zip\7za.exe", "-y x " & ruta_comprimido & " -o" & destino_comprimido) 'Si hay que descomprimir
 
+                'Encontrar o adaptar streamlink-master
+                If IO.Directory.Exists("Files\TEMP\streamlink-master") = False Then
+                    Dim alt_master_strk_final As String = ""
+                    For Each dir_master_strk_posible As String In IO.Directory.GetDirectories("Files\TEMP", "*", SearchOption.TopDirectoryOnly)
+                        dir_master_strk_posible = dir_master_strk_posible.Replace("/", "\")
+                        dir_master_strk_posible = dir_master_strk_posible.Remove(0, dir_master_strk_posible.LastIndexOf("\") + 1)
+                        If dir_master_strk_posible.StartsWith("streamlink-") Then
+                            alt_master_strk_final = dir_master_strk_posible
+                        End If
+                    Next
+                    If String.IsNullOrEmpty(alt_master_strk_final) = False Then
+                        My.Computer.FileSystem.RenameDirectory("Files\TEMP\" & alt_master_strk_final, "streamlink-master")
+                    End If
+                End If
+                '
+
+                'Chequeo dependencias (BETA)
+                If IO.File.Exists("Files\TEMP\streamlink-master\script/makeinstaller.sh") Then
+                    Dim dependencias_extras_check As String = GetPageHTMLCustom("Files\TEMP\streamlink-master\script/makeinstaller.sh", UserAgent_1, "https://github.com")
+                    dependencias_extras_check = dependencias_extras_check.Remove(0, dependencias_extras_check.IndexOf("[Include]") + 10)
+                    dependencias_extras_check = dependencias_extras_check.Remove(dependencias_extras_check.IndexOf("files="))
+                    dependencias_extras_check = dependencias_extras_check.Replace(" ", "")
+                    Dim dependencias_extras_check_2 As String = ""
+                    For Each dep_ext_chk As String In dependencias_extras_check.Split({ControlChars.Cr, ControlChars.Lf})
+                        dep_ext_chk = dep_ext_chk.Replace("packages=", "")
+                        dep_ext_chk = dep_ext_chk.Replace("pypi_wheels=", "")
+                        If dep_ext_chk.Contains("=") Then
+                            dep_ext_chk = dep_ext_chk.Remove(dep_ext_chk.IndexOf("="))
+                        End If
+                        dependencias_extras_check_2 += dep_ext_chk & vbNewLine
+                    Next
+                    dependencias_extras_check = dependencias_extras_check_2
+                    'Adaptar paquetes incluidos por defecto
+                    dependencias_extras_check = dependencias_extras_check.Replace("iso639", "pycountry")
+                    dependencias_extras_check = dependencias_extras_check.Replace("iso3166", "pycountry")
+                    dependencias_extras_check = dependencias_extras_check.Replace("pycryptodome", "Crypto")
+                    dependencias_extras_check = dependencias_extras_check.Replace("pkg_resources", "")
+                    '
+                    dependencias_extras_check = Regex.Replace(dependencias_extras_check, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
+                    DEPENDENCY_CHK_FINAL = dependencias_extras_check
+                End If
+                '
 
                 For Each archivin As String In IO.Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly)
                     IO.File.Delete(archivin)
@@ -297,6 +367,30 @@ Public Class Form1
                     IO.File.Delete("Releases\Streamlink\streamlinkrc")
                 End If
 
+                'Chequeo de dependencias (Parte 2)
+                Dim DEPENDENCIAS_FALTANTES As String = ""
+                If String.IsNullOrEmpty(DEPENDENCY_CHK_FINAL) = False Then
+                    For Each linea_analisis_dep As String In DEPENDENCY_CHK_FINAL.Split({ControlChars.Cr, ControlChars.Lf})
+                        If String.IsNullOrEmpty(linea_analisis_dep) = False Then
+                            Dim dep_faltante As Boolean = True
+                            For Each fold_depend_chk As String In IO.Directory.GetDirectories("Releases\Streamlink")
+                                fold_depend_chk = fold_depend_chk.Replace("/", "\")
+                                If fold_depend_chk.Contains("\") Then
+                                    fold_depend_chk = fold_depend_chk.Remove(0, fold_depend_chk.LastIndexOf("\") + 1)
+                                End If
+                                If fold_depend_chk = linea_analisis_dep Then
+                                    dep_faltante = False
+                                End If
+                            Next
+                            If dep_faltante = True Then
+                                DEPENDENCIAS_FALTANTES += linea_analisis_dep & vbNewLine
+                            End If
+                        End If
+                    Next
+                    DEPENDENCIAS_FALTANTES = Regex.Replace(DEPENDENCIAS_FALTANTES, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
+                End If
+                '
+
                 If Button1.Text = "Portable EXE" Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
                     BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
@@ -342,7 +436,13 @@ Public Class Form1
                     release_version_show = RELEASE_VER_ACTUAL & " (with the latest commits)"
                 End If
 
-                Msgbox_THREADSAFE("Release " & release_version_show & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
+                If String.IsNullOrEmpty(DEPENDENCIAS_FALTANTES) Then
+                    Msgbox_THREADSAFE("Release " & release_version_show & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
+                Else
+                    IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are missing:" & vbNewLine & DEPENDENCIAS_FALTANTES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
+                    Msgbox_THREADSAFE("Release " & release_version_show & " was built with some errors." & vbNewLine & "You can find it inside the Releases folder." & vbNewLine & "Check ERRORS.txt for more info.", MsgBoxStyle.Exclamation, "Notice")
+                End If
+
 
             Catch
                 Button3.Text = "Start building"
@@ -687,6 +787,9 @@ Public Class Form1
         Return Nothing
     End Function
 
+    Private Sub Descargador_HTML_DownloadProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs) Handles Descargador_HTML.DownloadProgressChanged
+        Descargador_HTML_ProgressActual = e.ProgressPercentage & "%"
+    End Sub
 End Class
 
 Public Class FileUnblocker
