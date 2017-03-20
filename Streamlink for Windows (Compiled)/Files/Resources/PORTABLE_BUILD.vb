@@ -55,6 +55,43 @@ Module Module1
             End If
         End If
 
+        If IO.File.Exists(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py") Then
+            Dim textbox_analisis_StreamlinkConstants As New TextBox
+            Dim StreamlinkConstants_final_modded As String = ""
+            textbox_analisis_StreamlinkConstants.Text = IO.File.ReadAllText(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py", Encoding.UTF8)
+
+            Dim WIN32_CHK_READY As Boolean = False
+
+            For i_linea_analisis_StreamlinkConstants As Integer = 0 To textbox_analisis_StreamlinkConstants.Lines.Count - 1
+                Dim linea_analisis_StreamlinkConstants As String = textbox_analisis_StreamlinkConstants.Lines(i_linea_analisis_StreamlinkConstants)
+                If String.IsNullOrWhiteSpace(linea_analisis_StreamlinkConstants) = False Then
+
+                    If linea_analisis_StreamlinkConstants.Contains("if is_win32:") Then
+                        WIN32_CHK_READY = True
+                    End If
+                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("APPDATA =") Then
+                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("APPDATA ="))
+                        linea_analisis_StreamlinkConstants += "APPDATA = os.path.normpath(" & chr(34) & url_trabajo_app.Replace("\", "/") & chr(34) & ")"
+                    End If
+                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("CONFIG_FILES =") Then
+                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("CONFIG_FILES ="))
+                        linea_analisis_StreamlinkConstants += "CONFIG_FILES = [os.path.join(APPDATA, " & chr(34) & "streamlinkrc" & chr(34) & ")]"
+                    End If
+                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("PLUGINS_DIR =") Then
+                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("PLUGINS_DIR ="))
+                        linea_analisis_StreamlinkConstants += "PLUGINS_DIR = os.path.join(APPDATA, " & chr(34) & "plugins" & chr(34) & ")"
+                    End If
+                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("else:") Then
+                        WIN32_CHK_READY = False
+                    End If
+
+                End If
+                StreamlinkConstants_final_modded += linea_analisis_StreamlinkConstants & vbNewLine
+            Next
+            textbox_analisis_StreamlinkConstants.Dispose()
+            IO.File.WriteAllText(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py", StreamlinkConstants_final_modded, Encoding.UTF8)
+        End If
+
         Dim DATOS_VER_ACTUAL As String = url_trabajo_app & "\VERSION.txt"
         If IO.File.Exists(DATOS_VER_ACTUAL) Then
             DATOS_VER_ACTUAL = IO.File.ReadAllText(DATOS_VER_ACTUAL, Encoding.UTF8)
