@@ -59,7 +59,25 @@ Public Class Form1
             End If
         Next
 
+        For Each botoncito As Control In Panel1.Controls
+            If TypeOf (botoncito) Is Button Then
+                botoncito.TabIndex = 0
+                botoncito.TabStop = False
+            End If
+        Next
+
+        AcomodarPaddingButtonCustormURL()
+
     End Sub
+
+    Public Function AcomodarPaddingButtonCustormURL()
+        If Button4.Visible = True Then
+            Dim diff_button_customurl As Integer = Panel1.Width - Button2.Width
+            Button2.Padding = New Padding(diff_button_customurl, 0, 0, 0)
+        Else
+            Button2.Padding = New Padding(0, 0, 0, 0)
+        End If
+    End Function
 
     Public Function Averiguar_Permisos_Escritura() As Boolean
         Try
@@ -112,6 +130,8 @@ Public Class Form1
         If Button2.Text = "Start downloading" Then
             If sender.text = "Portable EXE" Then
                 Button1.Text = "Standalone EXE"
+            ElseIf sender.text = "Standalone EXE" Then
+                Button1.Text = "Portable BAT"
             Else
                 Button1.Text = "Portable EXE"
             End If
@@ -169,6 +189,9 @@ Public Class Form1
         If e.Argument = "PASO1" Then
             Try
 
+                CambiarVisibilidadObjeto_THREADSAFE(Button4, False)
+                AcomodarPaddingButtonCustormURL()
+
                 Button2.Text = "Loading (1/1)"
 
                 'BorrarDirectorioSiExiste("Files\TEMP")
@@ -188,6 +211,8 @@ Public Class Form1
                                 'El usuario acepto actualizar de todas formas
                             Else
                                 Button2.Text = "Start downloading"
+                                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
+                                AcomodarPaddingButtonCustormURL()
                                 Return
                             End If
                         End If
@@ -221,6 +246,8 @@ Public Class Form1
 
             Catch
                 Button2.Text = "Start downloading"
+                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
+                AcomodarPaddingButtonCustormURL()
             End Try
         End If
 
@@ -391,6 +418,12 @@ Public Class Form1
                 End If
                 '
 
+                If Button1.Text = "Portable BAT" Then
+                    IO.File.Copy("Files\Resources\BAT_BUILD.txt", "Releases\Streamlink.bat", True)
+                    BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
+                    BorrarArchivoSiExiste("Releases\TEMP_COMPILE.vb")
+                End If
+
                 If Button1.Text = "Portable EXE" Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
                     BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
@@ -433,22 +466,36 @@ Public Class Form1
                 If String.IsNullOrEmpty(release_version_show) Then
                     release_version_show = VERSION_ACTUAL.Remove(7)
                 Else
-                    release_version_show = RELEASE_VER_ACTUAL & " (with the latest commits)"
+                    If URL_ZIP_ARCHIVE_ACTUAL = "https://github.com/streamlink/streamlink/archive/master.zip" Then
+                        release_version_show = RELEASE_VER_ACTUAL & " (with the latest commits)"
+                    End If
                 End If
 
-                If String.IsNullOrEmpty(DEPENDENCIAS_FALTANTES) Then
+                    If String.IsNullOrEmpty(DEPENDENCIAS_FALTANTES) Then
                     Msgbox_THREADSAFE("Release " & release_version_show & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
                 Else
                     IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are missing:" & vbNewLine & DEPENDENCIAS_FALTANTES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
                     Msgbox_THREADSAFE("Release " & release_version_show & " was built with some errors." & vbNewLine & "You can find it inside the Releases folder." & vbNewLine & "Check ERRORS.txt for more info.", MsgBoxStyle.Exclamation, "Notice")
                 End If
 
+                'Reiniciar todos los valores (para generar una nueva version)
+                Button2.Text = "Start downloading"
+                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
+                AcomodarPaddingButtonCustormURL()
+                Button3.Text = "Pending"
+                '
 
             Catch
                 Button3.Text = "Start building"
             End Try
         End If
 
+    End Sub
+
+    Sub CambiarVisibilidadObjeto_THREADSAFE(ByVal OBJETO As Object, ByVal Visibilidad As Boolean)
+        Me.Invoke(DirectCast(Sub()
+                                 OBJETO.visible = Visibilidad
+                             End Sub, MethodInvoker))
     End Sub
 
     Private Function getFileMd5(ByVal filePath As String) As String
@@ -789,6 +836,19 @@ Public Class Form1
 
     Private Sub Descargador_HTML_DownloadProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs) Handles Descargador_HTML.DownloadProgressChanged
         Descargador_HTML_ProgressActual = e.ProgressPercentage & "%"
+    End Sub
+
+    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
+        If Button2.Text = "Start downloading" Then
+            If BW_PASOS.IsBusy = False Then
+                Dim URL_ZIP_TEMP_ARCHIVE As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_ACTUAL, Me)
+                If String.IsNullOrWhiteSpace(URL_ZIP_TEMP_ARCHIVE) = False Then
+                    If URL_ZIP_TEMP_ARCHIVE.ToLower.StartsWith("http") Then
+                        URL_ZIP_ARCHIVE_ACTUAL = URL_ZIP_TEMP_ARCHIVE
+                    End If
+                End If
+            End If
+        End If
     End Sub
 End Class
 

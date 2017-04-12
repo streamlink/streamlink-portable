@@ -6,5 +6,6 @@ https://www.microsoft.com/en-US/download/details.aspx?id=30653
 https://www.microsoft.com/en-US/download/details.aspx?id=48145
 
 Notes:
--If you wish to use a custom ZIP archive (rather than latest snapshot) press right click in 'Start downloading' button
+-If you wish to use a custom ZIP archive (rather than latest snapshot) press right click in 'Start downloading' button (or the dropdown icon)
 -For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io
+-For issues visit https://github.com/streamlink/streamlink-portable/issues

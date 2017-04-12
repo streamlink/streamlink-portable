@@ -28,7 +28,9 @@ Partial Class Form1
         Me.Label9 = New System.Windows.Forms.Label()
         Me.Label10 = New System.Windows.Forms.Label()
         Me.Label7 = New System.Windows.Forms.Label()
+        Me.Panel1 = New System.Windows.Forms.Panel()
         Me.Button2 = New System.Windows.Forms.Button()
+        Me.Button4 = New System.Windows.Forms.Button()
         Me.Label6 = New System.Windows.Forms.Label()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -39,6 +41,7 @@ Partial Class Form1
         Me.Label4 = New System.Windows.Forms.Label()
         Me.Label5 = New System.Windows.Forms.Label()
         Me.Panel2.SuspendLayout()
+        Me.Panel1.SuspendLayout()
         Me.SuspendLayout()
         '
         'Panel2
@@ -51,7 +54,7 @@ Partial Class Form1
         Me.Panel2.Controls.Add(Me.Label9)
         Me.Panel2.Controls.Add(Me.Label10)
         Me.Panel2.Controls.Add(Me.Label7)
-        Me.Panel2.Controls.Add(Me.Button2)
+        Me.Panel2.Controls.Add(Me.Panel1)
         Me.Panel2.Controls.Add(Me.Label6)
         Me.Panel2.Controls.Add(Me.Label3)
         Me.Panel2.Controls.Add(Me.Label1)
@@ -127,20 +130,45 @@ Partial Class Form1
         Me.Label7.TabIndex = 15
         Me.Label7.Text = "                  "
         '
+        'Panel1
+        '
+        Me.Panel1.Controls.Add(Me.Button2)
+        Me.Panel1.Controls.Add(Me.Button4)
+        Me.Panel1.Dock = System.Windows.Forms.DockStyle.Top
+        Me.Panel1.Location = New System.Drawing.Point(10, 139)
+        Me.Panel1.Name = "Panel1"
+        Me.Panel1.Size = New System.Drawing.Size(457, 43)
+        Me.Panel1.TabIndex = 38
+        '
         'Button2
         '
         Me.Button2.BackColor = System.Drawing.Color.FromArgb(CType(CType(180, Byte), Integer), CType(CType(20, Byte), Integer), CType(CType(60, Byte), Integer))
-        Me.Button2.Dock = System.Windows.Forms.DockStyle.Top
+        Me.Button2.Dock = System.Windows.Forms.DockStyle.Fill
         Me.Button2.FlatAppearance.BorderSize = 0
         Me.Button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button2.Font = New System.Drawing.Font("Segoe UI", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button2.ForeColor = System.Drawing.Color.White
-        Me.Button2.Location = New System.Drawing.Point(10, 139)
+        Me.Button2.Location = New System.Drawing.Point(0, 0)
         Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(457, 43)
-        Me.Button2.TabIndex = 16
+        Me.Button2.Size = New System.Drawing.Size(417, 43)
+        Me.Button2.TabIndex = 17
         Me.Button2.Text = "Start downloading"
         Me.Button2.UseVisualStyleBackColor = False
+        '
+        'Button4
+        '
+        Me.Button4.BackColor = System.Drawing.Color.FromArgb(CType(CType(180, Byte), Integer), CType(CType(20, Byte), Integer), CType(CType(60, Byte), Integer))
+        Me.Button4.Dock = System.Windows.Forms.DockStyle.Right
+        Me.Button4.FlatAppearance.BorderSize = 0
+        Me.Button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Button4.Font = New System.Drawing.Font("Segoe UI", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Button4.ForeColor = System.Drawing.Color.White
+        Me.Button4.Location = New System.Drawing.Point(417, 0)
+        Me.Button4.Name = "Button4"
+        Me.Button4.Size = New System.Drawing.Size(40, 43)
+        Me.Button4.TabIndex = 19
+        Me.Button4.Text = "▼"
+        Me.Button4.UseVisualStyleBackColor = False
         '
         'Label6
         '
@@ -261,6 +289,7 @@ Partial Class Form1
         Me.Text = "Streamlink for Windows"
         Me.Panel2.ResumeLayout(False)
         Me.Panel2.PerformLayout()
+        Me.Panel1.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -272,7 +301,6 @@ Partial Class Form1
     Friend WithEvents Label9 As Label
     Friend WithEvents Label10 As Label
     Friend WithEvents Label7 As Label
-    Friend WithEvents Button2 As Button
     Friend WithEvents Label4 As Label
     Friend WithEvents Label5 As Label
     Friend WithEvents Label6 As Label
@@ -282,4 +310,7 @@ Partial Class Form1
     Friend WithEvents Label2 As Label
     Friend WithEvents Label11 As Label
     Friend WithEvents Label12 As Label
+    Friend WithEvents Button2 As Button
+    Friend WithEvents Button4 As Button
+    Friend WithEvents Panel1 As Panel
 End Class

@@ -9,7 +9,7 @@ Imports System.Runtime.InteropServices
 ' Revisar los valores de los atributos del ensamblado
 
 <Assembly: AssemblyTitle("Streamlink for Windows")>
-<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyDescription("Streamlink for Windows")>
 <Assembly: AssemblyCompany("Streamlink")>
 <Assembly: AssemblyProduct("Streamlink for Windows")>
 <Assembly: AssemblyCopyright("Streamlink")>
