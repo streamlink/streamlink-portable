@@ -2,4 +2,11 @@
 REM Change the code page for UTF8
 chcp 65001 >NUL
 set PYTHONIOENCODING=cp65001
-"%~dp0\Python 3.5.2\python.exe" "%~dp0\Streamlink\Streamlink.py" --ffmpeg-ffmpeg "%~dp0\Streamlink\ffmpeg\ffmpeg.exe" --rtmp-rtmpdump "%~dp0\Streamlink\rtmpdump\rtmpdump.exe" --config "%~dp0\streamlinkrc" %* --no-version-check
+if exist "%~dp0\VERSION.txt" (
+    set /p StreamlinkVersion=<"%~dp0\VERSION.txt"
+    echo [Streamlink for Windows %StreamlinkVersion%]
+) else (
+    echo [Streamlink for Windows]
+)
+"%~dp0\Python 3.5.2\python.exe" "%~dp0\Streamlink\Streamlink.py" --ffmpeg-ffmpeg "%~dp0\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" --rtmp-rtmpdump "%~dp0\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" --config "%~dp0\streamlinkrc" %* --no-version-check
+echo [End of Streamlink for Windows]

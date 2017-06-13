@@ -11,38 +11,38 @@ Imports System.Text.RegularExpressions
 
 Public Class Form1
     Public Shared CodeDomProvider As CodeDomProvider = CodeDomProvider.CreateProvider("VB")
-    Public Shared url_trabajo_app As String = IO.Path.GetDirectoryName(Application.ExecutablePath)
-    Dim WithEvents Descargador_HTML As New WebClient() 'Descargador de datos
-    Dim Descargador_HTML_ProgressActual As String = "0%"
+    Public Shared Current_EXE_Path As String = IO.Path.GetDirectoryName(Application.ExecutablePath)
+    Dim WithEvents DATA_Downloader As New WebClient() 'Data downloader
+    Dim DATA_Downloader_CurrentProgress As String = "0%"
     Dim UserAgent_1 As String = "Mozilla/5.0 (Android; Mobile; rv:30.0) Gecko/30.0 Firefox/30.0" 'Android (Mobile)
     Dim UserAgent_2 As String = "Dalvik/1.6.0 (Linux; U; Android 4.4.2; TegraNote-P1640 Build/KOT49H)" 'Android (Tablet)
-    Dim UserAgent_3 As String = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0" 'Windows (Escritorio)
+    Dim UserAgent_3 As String = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0" 'Windows (Desktop)
 
-    'Para tareas que requieren WebRequest y WebResponse
+    'For work with WebRequest y WebResponse
     Dim myHttpWebRequest As HttpWebRequest
     Dim myHttpWebResponse As HttpWebResponse
     '
 
-    'Almacen de datos actuales
-    Dim URL_ZIP_ARCHIVE_ACTUAL As String = "https://github.com/streamlink/streamlink/archive/master.zip"
+    'Current data storage
+    Dim URL_ZIP_ARCHIVE_CURRENT As String = "https://github.com/streamlink/streamlink/archive/master.zip"
     Dim DEPENDENCY_CHK_FINAL As String = ""
-    Dim VERSION_ACTUAL As String = ""
-    Dim RELEASE_VER_ACTUAL As String = ""
+    Dim CURRENT_VERSION As String = ""
+    Dim RELEASE_VER_CURRENT As String = ""
     '
 
-    Public WithEvents BW_PASOS As New ExtendedBackgroundWorker
+    Public WithEvents BW_STEPS As New ExtendedBackgroundWorker
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         Me.KeyPreview = True
-        Me.Icon = ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location) 'El icono sera el mismo que el de la aplicacion
-        Me.DoubleBuffered = True 'Evitar que ocurra flickering en la UI
+        Me.Icon = ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location) 'The icon will be the same as the application
+        Me.DoubleBuffered = True 'To Avoid UI flickering
         Me.ClientSize = Panel2.ClientSize
         Me.CenterToScreen()
-        CheckForIllegalCrossThreadCalls = False 'Activar manejo total por parte de backgroundworkers
-        IO.Directory.SetCurrentDirectory(url_trabajo_app)
+        CheckForIllegalCrossThreadCalls = False 'Enable full management by backgroundworkers
+        IO.Directory.SetCurrentDirectory(Current_EXE_Path)
 
-        'Averiguar si hay permisos de escritura
-        If Averiguar_Permisos_Escritura() = False Then
+        'Check write permissions
+        If Check_Write_Permissions() = False Then
             Msgbox_THREADSAFE("I dont have write permissions :(" & vbNewLine & "Try running me with administrator rights.", MsgBoxStyle.Critical, "Error")
             Application.Exit()
             Application.ExitThread()
@@ -50,27 +50,27 @@ Public Class Form1
         End If
         '
 
-        Desbloquear_Todos_Los_EXE("Files")
+        Unlock_All_EXE("Files")
 
-        For Each botoncito As Control In Panel2.Controls
-            If TypeOf (botoncito) Is Button Then
-                botoncito.TabIndex = 0
-                botoncito.TabStop = False
+        For Each Button_TMP As Control In Panel2.Controls
+            If TypeOf (Button_TMP) Is Button Then
+                Button_TMP.TabIndex = 0
+                Button_TMP.TabStop = False
             End If
         Next
 
-        For Each botoncito As Control In Panel1.Controls
-            If TypeOf (botoncito) Is Button Then
-                botoncito.TabIndex = 0
-                botoncito.TabStop = False
+        For Each Button_TMP As Control In Panel1.Controls
+            If TypeOf (Button_TMP) Is Button Then
+                Button_TMP.TabIndex = 0
+                Button_TMP.TabStop = False
             End If
         Next
 
-        AcomodarPaddingButtonCustormURL()
+        AdjustPaddingButtonCustomURL()
 
     End Sub
 
-    Public Function AcomodarPaddingButtonCustormURL()
+    Public Function AdjustPaddingButtonCustomURL()
         If Button4.Visible = True Then
             Dim diff_button_customurl As Integer = Panel1.Width - Button2.Width
             Button2.Padding = New Padding(diff_button_customurl, 0, 0, 0)
@@ -79,7 +79,7 @@ Public Class Form1
         End If
     End Function
 
-    Public Function Averiguar_Permisos_Escritura() As Boolean
+    Public Function Check_Write_Permissions() As Boolean
         Try
             IO.File.WriteAllText("TEST.rtv", "", Encoding.UTF8)
             IO.File.Delete("TEST.rtv")
@@ -90,39 +90,39 @@ Public Class Form1
     End Function
 
     Public Function GetPageHTMLCustom(ByVal URL As String, ByVal UserAgent_Custom As String, ByVal Referer_Custom As String, Optional ByVal Cookies As String = "") As String
-        Dim RESULTADO As String = ""
-        Descargador_HTML.Encoding = Encoding.UTF8
-        Descargador_HTML.Headers.Clear()
-        Descargador_HTML.Headers(Net.HttpRequestHeader.Referer) = Referer_Custom
-        Descargador_HTML.Headers(Net.HttpRequestHeader.UserAgent) = UserAgent_Custom
-        Descargador_HTML.Headers(Net.HttpRequestHeader.Cookie) = Cookies
+        Dim RESULT As String = ""
+        DATA_Downloader.Encoding = Encoding.UTF8
+        DATA_Downloader.Headers.Clear()
+        DATA_Downloader.Headers(Net.HttpRequestHeader.Referer) = Referer_Custom
+        DATA_Downloader.Headers(Net.HttpRequestHeader.UserAgent) = UserAgent_Custom
+        DATA_Downloader.Headers(Net.HttpRequestHeader.Cookie) = Cookies
         Try
-            RESULTADO = Descargador_HTML.DownloadString(URL) 'Intentar obtener resultado de manera directa
-        Catch falla As WebException 'Intentar obtener resultado ignorando errores
-            Using sr = New StreamReader(falla.Response.GetResponseStream())
-                RESULTADO = sr.ReadToEnd()
+            RESULT = DATA_Downloader.DownloadString(URL) 'Try to get results directly
+        Catch fail As WebException 'Try to get result ignoring errors
+            Using sr = New StreamReader(fail.Response.GetResponseStream())
+                RESULT = sr.ReadToEnd()
             End Using
         End Try
-        Return RESULTADO
+        Return RESULT
     End Function
 
     Public Function GetPageHTMLCustom_POST(ByVal POST As String, ByVal URL As String, ByVal UserAgent_Custom As String, ByVal Referer_Custom As String, Optional ByVal Cookies As String = "") As String
-        Dim RESULTADO As String = ""
-        Descargador_HTML.Encoding = Encoding.UTF8
-        Descargador_HTML.Headers.Clear()
-        Descargador_HTML.Headers(Net.HttpRequestHeader.Referer) = Referer_Custom
-        Descargador_HTML.Headers(Net.HttpRequestHeader.UserAgent) = UserAgent_Custom
-        Descargador_HTML.Headers(Net.HttpRequestHeader.Cookie) = Cookies
-        Descargador_HTML.Headers.Add("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")
+        Dim RESULT As String = ""
+        DATA_Downloader.Encoding = Encoding.UTF8
+        DATA_Downloader.Headers.Clear()
+        DATA_Downloader.Headers(Net.HttpRequestHeader.Referer) = Referer_Custom
+        DATA_Downloader.Headers(Net.HttpRequestHeader.UserAgent) = UserAgent_Custom
+        DATA_Downloader.Headers(Net.HttpRequestHeader.Cookie) = Cookies
+        DATA_Downloader.Headers.Add("Content-Type: application/x-www-form-urlencoded; charset=UTF-8")
 
         Try
-            RESULTADO = Descargador_HTML.UploadString(URL, POST) 'Intentar obtener resultado de manera directa
-        Catch falla As WebException 'Intentar obtener resultado ignorando errores
-            Using sr = New StreamReader(falla.Response.GetResponseStream())
-                RESULTADO = sr.ReadToEnd()
+            RESULT = DATA_Downloader.UploadString(URL, POST) 'Try to get results directly
+        Catch fail As WebException 'Try to get result ignoring errors
+            Using sr = New StreamReader(fail.Response.GetResponseStream())
+                RESULT = sr.ReadToEnd()
             End Using
         End Try
-        Return RESULTADO
+        Return RESULT
     End Function
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
@@ -143,18 +143,18 @@ Public Class Form1
         If sender.Text = "Start downloading" Then
 
             If e.Button = MouseButtons.Left Then
-                If BW_PASOS.IsBusy = False Then
-                    BW_PASOS.RunWorkerAsync("PASO1")
+                If BW_STEPS.IsBusy = False Then
+                    BW_STEPS.RunWorkerAsync("STEP1")
                 End If
             End If
 
             If e.Button = MouseButtons.Right Then
-                If BW_PASOS.IsBusy = False Then
-                    Dim URL_ZIP_TEMP_ARCHIVE As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_ACTUAL, Me)
-                    If String.IsNullOrWhiteSpace(URL_ZIP_TEMP_ARCHIVE) = False Then
-                        If URL_ZIP_TEMP_ARCHIVE.ToLower.StartsWith("http") Then
-                            URL_ZIP_ARCHIVE_ACTUAL = URL_ZIP_TEMP_ARCHIVE
-                            BW_PASOS.RunWorkerAsync("PASO1")
+                If BW_STEPS.IsBusy = False Then
+                    Dim URL_ZIP_ARCHIVE_TEMP As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_CURRENT, Me)
+                    If String.IsNullOrWhiteSpace(URL_ZIP_ARCHIVE_TEMP) = False Then
+                        If URL_ZIP_ARCHIVE_TEMP.ToLower.StartsWith("http") Then
+                            URL_ZIP_ARCHIVE_CURRENT = URL_ZIP_ARCHIVE_TEMP
+                            BW_STEPS.RunWorkerAsync("STEP1")
                         End If
                     End If
                 End If
@@ -166,78 +166,77 @@ Public Class Form1
     Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
         Form1_Deactivate(Nothing, Nothing)
         If Button2.Text = "Completed" And sender.text = "Start building" Then
-            If BW_PASOS.IsBusy = False Then
-                BW_PASOS.RunWorkerAsync("PASO2")
+            If BW_STEPS.IsBusy = False Then
+                BW_STEPS.RunWorkerAsync("STEP2")
             End If
         End If
     End Sub
 
-    Sub BorrarArchivoSiExiste(ByVal URL As String)
+    Sub DeleteFileIfExists(ByVal URL As String)
         If IO.File.Exists(URL) Then
             IO.File.Delete(URL)
         End If
     End Sub
 
-    Sub BorrarDirectorioSiExiste(ByVal URL As String)
+    Sub DeleteDirectoryIfExists(ByVal URL As String)
         If IO.Directory.Exists(URL) Then
             IO.Directory.Delete(URL, True)
         End If
     End Sub
 
-    Private Sub BW_PASOS_DoWork(sender As Object, e As DoWorkEventArgs) Handles BW_PASOS.DoWork
-        CancelarInteraccionesInternet()
-        If e.Argument = "PASO1" Then
+    Private Sub BW_STEPS_DoWork(sender As Object, e As DoWorkEventArgs) Handles BW_STEPS.DoWork
+        Cancel_Internet_Interactions()
+        If e.Argument = "STEP1" Then
             Try
 
-                CambiarVisibilidadObjeto_THREADSAFE(Button4, False)
-                AcomodarPaddingButtonCustormURL()
+                ChangeObjectVisibility_THREADSAFE(Button4, False)
+                AdjustPaddingButtonCustomURL()
 
                 Button2.Text = "Loading (1/1)"
 
-                'BorrarDirectorioSiExiste("Files\TEMP")
+                'DeleteDirectoryIfExists("Files\TEMP")
                 IO.Directory.CreateDirectory("Files\TEMP")
 
-                Dim nueva_version_disponible As Boolean = True
-                Dim strlk_url As String = URL_ZIP_ARCHIVE_ACTUAL
-                VERSION_ACTUAL = ObtenerETAG_HTTPHEADER(strlk_url)
+                Dim New_Version_Available As Boolean = True
+                Dim Streamlink_URL As String = URL_ZIP_ARCHIVE_CURRENT
+                CURRENT_VERSION = GetETAG_HTTPHEADER(Streamlink_URL)
 
                 If IO.Directory.Exists("Releases") Then
                     If IO.File.Exists("Releases\VERSION.txt") Then
                         Dim vers_check As String = IO.File.ReadAllText("Releases\VERSION.txt")
-                        If vers_check.Contains(VERSION_ACTUAL.Remove(7)) Then
-                            nueva_version_disponible = False
+                        If vers_check.Contains(CURRENT_VERSION.Remove(7)) Then
+                            New_Version_Available = False
                             Dim result As Integer = Msgbox_Interactive_THREADSAFE("It looks like you already have the latest version." & vbNewLine & "Continue anyway?", "Notice", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                             If result = DialogResult.Yes Then
-                                'El usuario acepto actualizar de todas formas
+                                'The user agreed to update anyway
                             Else
                                 Button2.Text = "Start downloading"
-                                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
-                                AcomodarPaddingButtonCustormURL()
+                                ChangeObjectVisibility_THREADSAFE(Button4, True)
+                                AdjustPaddingButtonCustomURL()
                                 Return
                             End If
                         End If
                     End If
                 End If
 
-                Dim redescargar_latest_streamlink_zip As Boolean = True
-                If nueva_version_disponible = False And IO.File.Exists("Files\TEMP\Streamlink_Latest_MD5.txt") And IO.File.Exists("Files\TEMP\Streamlink_Latest.zip") Then
-                    Dim md5_anterior As String = IO.File.ReadAllText("Files\TEMP\Streamlink_Latest_MD5.txt", Encoding.UTF8)
-                    Dim md5_actual As String = getFileMd5("Files\TEMP\Streamlink_Latest.zip")
-                    If md5_anterior = md5_actual Then
-                        redescargar_latest_streamlink_zip = False
+                Dim Redownload_Latest_Streamlink_ZIP As Boolean = True
+                If New_Version_Available = False And IO.File.Exists("Files\TEMP\Streamlink_Latest_MD5.txt") And IO.File.Exists("Files\TEMP\Streamlink_Latest.zip") Then
+                    Dim MD5_previous As String = IO.File.ReadAllText("Files\TEMP\Streamlink_Latest_MD5.txt", Encoding.UTF8)
+                    Dim MD5_Current As String = getFileMD5("Files\TEMP\Streamlink_Latest.zip")
+                    If MD5_previous = MD5_Current Then
+                        Redownload_Latest_Streamlink_ZIP = False
                     End If
                 End If
-                If redescargar_latest_streamlink_zip = True Then
-                    BorrarDirectorioSiExiste("Files\TEMP")
+                If Redownload_Latest_Streamlink_ZIP = True Then
+                    DeleteDirectoryIfExists("Files\TEMP")
                     IO.Directory.CreateDirectory("Files\TEMP")
-                    'Descargador_HTML.DownloadFile(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
+                    'DATA_Downloader.DownloadFile(Streamlink_URL, "Files\TEMP\Streamlink_Latest.zip")
 
-                    Descargador_HTML.DownloadFileTaskAsync(strlk_url, "Files\TEMP\Streamlink_Latest.zip")
-                    Do Until Descargador_HTML.IsBusy = False
+                    DATA_Downloader.DownloadFileTaskAsync(Streamlink_URL, "Files\TEMP\Streamlink_Latest.zip")
+                    Do Until DATA_Downloader.IsBusy = False
                         Threading.Thread.Sleep(500)
-                        Button2.Text = "Downloading (" & Descargador_HTML_ProgressActual & ")"
+                        Button2.Text = "Downloading (" & DATA_Downloader_CurrentProgress & ")"
                     Loop
-
 
                 End If
 
@@ -246,81 +245,83 @@ Public Class Form1
 
             Catch
                 Button2.Text = "Start downloading"
-                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
-                AcomodarPaddingButtonCustormURL()
+                ChangeObjectVisibility_THREADSAFE(Button4, True)
+                AdjustPaddingButtonCustomURL()
             End Try
         End If
 
-        If e.Argument = "PASO2" Then
+        If e.Argument = "STEP2" Then
             Try
                 Button3.Text = "Loading (1/3)"
 
-                Dim ruta_comprimido As String = Chr(34) & url_trabajo_app & "\Files\TEMP\Streamlink_Latest.zip" & Chr(34)
-                Dim destino_comprimido As String = Chr(34) & url_trabajo_app & "\Files\TEMP" & Chr(34)
-                BorrarDirectorioSiExiste("Files\TEMP\streamlink-master")
-                EjecutarYEsperar("Files\7zip\7za.exe", "-y x " & ruta_comprimido & " -o" & destino_comprimido) 'Si hay que descomprimir
+                Dim compressed_path As String = Chr(34) & Current_EXE_Path & "\Files\TEMP\Streamlink_Latest.zip" & Chr(34)
+                Dim compressed_destination As String = Chr(34) & Current_EXE_Path & "\Files\TEMP" & Chr(34)
+                DeleteDirectoryIfExists("Files\TEMP\streamlink-master")
+                RunAndWait("Files\7zip\7za.exe", "-y x " & compressed_path & " -o" & compressed_destination) 'Unzip content
 
-                'Encontrar o adaptar streamlink-master
+                'Find or adjust streamlink-master
                 If IO.Directory.Exists("Files\TEMP\streamlink-master") = False Then
-                    Dim alt_master_strk_final As String = ""
-                    For Each dir_master_strk_posible As String In IO.Directory.GetDirectories("Files\TEMP", "*", SearchOption.TopDirectoryOnly)
-                        dir_master_strk_posible = dir_master_strk_posible.Replace("/", "\")
-                        dir_master_strk_posible = dir_master_strk_posible.Remove(0, dir_master_strk_posible.LastIndexOf("\") + 1)
-                        If dir_master_strk_posible.StartsWith("streamlink-") Then
-                            alt_master_strk_final = dir_master_strk_posible
+                    Dim Alternative_Streamlink_Master_DIR As String = ""
+                    For Each Possible_Streamlink_Master_DIR As String In IO.Directory.GetDirectories("Files\TEMP", "*", SearchOption.TopDirectoryOnly)
+                        Possible_Streamlink_Master_DIR = Possible_Streamlink_Master_DIR.Replace("/", "\")
+                        Possible_Streamlink_Master_DIR = Possible_Streamlink_Master_DIR.Remove(0, Possible_Streamlink_Master_DIR.LastIndexOf("\") + 1)
+                        If Possible_Streamlink_Master_DIR.StartsWith("streamlink-") Then
+                            Alternative_Streamlink_Master_DIR = Possible_Streamlink_Master_DIR
                         End If
                     Next
-                    If String.IsNullOrEmpty(alt_master_strk_final) = False Then
-                        My.Computer.FileSystem.RenameDirectory("Files\TEMP\" & alt_master_strk_final, "streamlink-master")
+                    If String.IsNullOrEmpty(Alternative_Streamlink_Master_DIR) = False Then
+                        My.Computer.FileSystem.RenameDirectory("Files\TEMP\" & Alternative_Streamlink_Master_DIR, "streamlink-master")
                     End If
                 End If
                 '
 
-                'Chequeo dependencias (BETA)
-                If IO.File.Exists("Files\TEMP\streamlink-master\script/makeinstaller.sh") Then
-                    Dim dependencias_extras_check As String = GetPageHTMLCustom("Files\TEMP\streamlink-master\script/makeinstaller.sh", UserAgent_1, "https://github.com")
-                    dependencias_extras_check = dependencias_extras_check.Remove(0, dependencias_extras_check.IndexOf("[Include]") + 10)
-                    dependencias_extras_check = dependencias_extras_check.Remove(dependencias_extras_check.IndexOf("files="))
-                    dependencias_extras_check = dependencias_extras_check.Replace(" ", "")
-                    Dim dependencias_extras_check_2 As String = ""
-                    For Each dep_ext_chk As String In dependencias_extras_check.Split({ControlChars.Cr, ControlChars.Lf})
-                        dep_ext_chk = dep_ext_chk.Replace("packages=", "")
-                        dep_ext_chk = dep_ext_chk.Replace("pypi_wheels=", "")
-                        If dep_ext_chk.Contains("=") Then
-                            dep_ext_chk = dep_ext_chk.Remove(dep_ext_chk.IndexOf("="))
+                'Dependency check (BETA)
+                If IO.File.Exists("Files\TEMP\streamlink-master\script\makeinstaller.sh") Then
+                    Dim Extra_Dependencies_Check As String = GetPageHTMLCustom("Files\TEMP\streamlink-master\script\makeinstaller.sh", UserAgent_1, "https://github.com")
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Remove(0, Extra_Dependencies_Check.IndexOf("[Include]") + 10)
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Remove(Extra_Dependencies_Check.IndexOf("files="))
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Replace(" ", "")
+                    Dim Extra_Dependencies_Check_2 As String = ""
+                    For Each ExtDependency_Check_TMP As String In Extra_Dependencies_Check.Split({ControlChars.Cr, ControlChars.Lf})
+                        ExtDependency_Check_TMP = ExtDependency_Check_TMP.Replace("packages=", "")
+                        ExtDependency_Check_TMP = ExtDependency_Check_TMP.Replace("pypi_wheels=", "")
+                        If ExtDependency_Check_TMP.Contains("=") Then
+                            ExtDependency_Check_TMP = ExtDependency_Check_TMP.Remove(ExtDependency_Check_TMP.IndexOf("="))
                         End If
-                        dependencias_extras_check_2 += dep_ext_chk & vbNewLine
+                        Extra_Dependencies_Check_2 += ExtDependency_Check_TMP & vbNewLine
                     Next
-                    dependencias_extras_check = dependencias_extras_check_2
-                    'Adaptar paquetes incluidos por defecto
-                    dependencias_extras_check = dependencias_extras_check.Replace("iso639", "pycountry")
-                    dependencias_extras_check = dependencias_extras_check.Replace("iso3166", "pycountry")
-                    dependencias_extras_check = dependencias_extras_check.Replace("pycryptodome", "Crypto")
-                    dependencias_extras_check = dependencias_extras_check.Replace("pkg_resources", "")
+                    Extra_Dependencies_Check = Extra_Dependencies_Check_2
+                    'Adjust bundled packages
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Replace("iso639", "pycountry")
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Replace("iso3166", "pycountry")
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Replace("pycryptodome", "Crypto")
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Replace("pkg_resources", "")
                     '
-                    dependencias_extras_check = Regex.Replace(dependencias_extras_check, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
-                    DEPENDENCY_CHK_FINAL = dependencias_extras_check
+                    Extra_Dependencies_Check = Regex.Replace(Extra_Dependencies_Check, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
+                    DEPENDENCY_CHK_FINAL = Extra_Dependencies_Check
                 End If
                 '
 
-                For Each archivin As String In IO.Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly)
-                    IO.File.Delete(archivin)
+                For Each File_TMP As String In IO.Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly)
+                    IO.File.Delete(File_TMP)
                 Next
 
-                For Each carpetin As String In IO.Directory.GetDirectories("Files\TEMP\streamlink-master")
-                    carpetin = carpetin.Replace("/", "\")
-                    If (carpetin.EndsWith("\src") Or carpetin.EndsWith("\win32")) = False Then
-                        IO.Directory.Delete(carpetin, True)
+                For Each Folder_TMP As String In IO.Directory.GetDirectories("Files\TEMP\streamlink-master")
+                    Folder_TMP = Folder_TMP.Replace("/", "\")
+                    If (Folder_TMP.EndsWith("\src") Or Folder_TMP.EndsWith("\win32")) = False Then
+                        IO.Directory.Delete(Folder_TMP, True)
                     End If
                 Next
 
                 MoveAllItems("Files\TEMP\streamlink-master\src", "Files\TEMP\streamlink-master")
+                DeleteDirectoryIfExists("Files\TEMP\streamlink-master\src")
                 MoveAllItems("Files\TEMP\streamlink-master\win32", "Files\TEMP\streamlink-master")
-                BorrarDirectorioSiExiste("Files\TEMP\streamlink-master\src")
-                BorrarDirectorioSiExiste("Files\TEMP\streamlink-master\win32")
+                DeleteDirectoryIfExists("Files\TEMP\streamlink-master\win32")
 
-                For Each barrido_post_extract_file As String In Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly).Where(Function(s) s.ToLower.EndsWith(".ico")) 'OrElse s.EndsWith(".png"))
-                    IO.File.Delete(barrido_post_extract_file)
+                For Each barrido_post_extract_file As String In Directory.GetFiles("Files\TEMP\streamlink-master", "*.*", SearchOption.TopDirectoryOnly)
+                    If barrido_post_extract_file.ToLower.EndsWith(".ico") Then
+                        IO.File.Delete(barrido_post_extract_file)
+                    End If
                 Next
 
                 Dim argparser_py_location As String = "Files\TEMP\streamlink-master\streamlink_cli\argparser.py"
@@ -330,119 +331,127 @@ Public Class Form1
                 argparser_py = argparser_py.Replace(argparser_py_replace, argparser_py_replace_end)
                 IO.File.WriteAllText(argparser_py_location, argparser_py, Encoding.UTF8)
 
-                ruta_comprimido = Chr(34) & url_trabajo_app & "\Files\Resources\Streamlink_Patches.zip" & Chr(34)
-                destino_comprimido = Chr(34) & url_trabajo_app & "\Files\TEMP\streamlink-master" & Chr(34)
-                EjecutarYEsperar("Files\7zip\7za.exe", "-y x " & ruta_comprimido & " -o" & destino_comprimido) 'Si hay que descomprimir
+                compressed_path = Chr(34) & Current_EXE_Path & "\Files\Resources\Streamlink_Patches.zip" & Chr(34)
+                compressed_destination = Chr(34) & Current_EXE_Path & "\Files\TEMP\streamlink-master" & Chr(34)
+                RunAndWait("Files\7zip\7za.exe", "-y x " & compressed_path & " -o" & compressed_destination) 'Si hay que descomprimir
 
                 Button3.Text = "Loading (2/3)"
 
-                Finalizar_Todos_Los_EXE("Releases")
+                Kill_All_EXE("Releases")
+
                 If IO.File.Exists("Releases\streamlinkrc") Then
+                    DeleteFileIfExists("Files\TEMP\streamlinkrc_BACKUP")
                     IO.File.Copy("Releases\streamlinkrc", "Files\TEMP\streamlinkrc_BACKUP")
                 End If
-                BorrarDirectorioSiExiste("Releases")
+                DeleteDirectoryIfExists("Releases")
                 IO.Directory.CreateDirectory("Releases\Python 3.5.2")
-
                 MoveAllItems("Files\TEMP\streamlink-master", "Releases\Streamlink")
-                BorrarDirectorioSiExiste("Files\TEMP\streamlink-master")
+                DeleteDirectoryIfExists("Files\TEMP\streamlink-master")
 
-                ruta_comprimido = Chr(34) & url_trabajo_app & "\Files\Resources\python-3.5.2-embed-win32.zip" & Chr(34)
-                destino_comprimido = Chr(34) & url_trabajo_app & "\Releases\Python 3.5.2" & Chr(34)
-                EjecutarYEsperar("Files\7zip\7za.exe", "-y x " & ruta_comprimido & " -o" & destino_comprimido) 'Si hay que descomprimir
+                compressed_path = Chr(34) & Current_EXE_Path & "\Files\Resources\python-3.5.2-embed-win32.zip" & Chr(34)
+                compressed_destination = Chr(34) & Current_EXE_Path & "\Releases\Python 3.5.2" & Chr(34)
+                RunAndWait("Files\7zip\7za.exe", "-y x " & compressed_path & " -o" & compressed_destination) 'Si hay que descomprimir
 
                 Button3.Text = "Loading (3/3)"
 
                 Dim README_CONTENT As String = "Usage from cmd:" & vbNewLine & "Streamlink.exe ARGUMENTS" & vbNewLine & vbNewLine & "For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io"
                 IO.File.WriteAllText("Releases\README.txt", README_CONTENT)
 
-                RELEASE_VER_ACTUAL = "Releases\Streamlink\streamlink\__init__.py"
-                If IO.File.Exists(RELEASE_VER_ACTUAL) Then
+                RELEASE_VER_CURRENT = "Releases\Streamlink\streamlink\__init__.py"
+                If IO.File.Exists(RELEASE_VER_CURRENT) Then
                     Try
-                        RELEASE_VER_ACTUAL = IO.File.ReadAllText(RELEASE_VER_ACTUAL, Encoding.UTF8)
-                        RELEASE_VER_ACTUAL = RELEASE_VER_ACTUAL.ToLower.Remove(0, RELEASE_VER_ACTUAL.IndexOf("__version__ = ") + 15)
-                        RELEASE_VER_ACTUAL = RELEASE_VER_ACTUAL.Remove(RELEASE_VER_ACTUAL.IndexOf(Chr(34)))
+                        RELEASE_VER_CURRENT = IO.File.ReadAllText(RELEASE_VER_CURRENT, Encoding.UTF8)
+                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.ToLower.Remove(0, RELEASE_VER_CURRENT.IndexOf("__version__ = ") + 15)
+                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Remove(RELEASE_VER_CURRENT.IndexOf(Chr(34)))
                     Catch
-                        RELEASE_VER_ACTUAL = ""
+                        RELEASE_VER_CURRENT = ""
                     End Try
                 Else
-                    RELEASE_VER_ACTUAL = ""
+                    RELEASE_VER_CURRENT = ""
                 End If
 
                 Dim version_txt_out As String = ""
-                If String.IsNullOrEmpty(RELEASE_VER_ACTUAL) Then
-                    version_txt_out = "Git " & VERSION_ACTUAL.Remove(7)
+                If String.IsNullOrEmpty(RELEASE_VER_CURRENT) Then
+                    version_txt_out = "Git " & CURRENT_VERSION.Remove(7)
                 Else
-                    version_txt_out = "v" & RELEASE_VER_ACTUAL & " - Git " & VERSION_ACTUAL.Remove(7)
+                    version_txt_out = "v" & RELEASE_VER_CURRENT & " - Git " & CURRENT_VERSION.Remove(7)
                 End If
                 IO.File.WriteAllText("Releases\VERSION.txt", version_txt_out)
 
                 If IO.File.Exists("Releases\Streamlink\streamlinkrc") Then
-                    Dim textbox_analisis_streamlinkrc As New TextBox
+                    Dim textbox_analysis_streamlinkrc As New TextBox
                     Dim streamlinkrc_final_modded As String = ""
-                    textbox_analisis_streamlinkrc.Text = IO.File.ReadAllText("Releases\Streamlink\streamlinkrc", Encoding.UTF8)
-                    For i_linea_analisis_streamlinkrc As Integer = 0 To textbox_analisis_streamlinkrc.Lines.Count - 1
-                        Dim linea_analisis_streamlinkrc As String = textbox_analisis_streamlinkrc.Lines(i_linea_analisis_streamlinkrc)
-                        If String.IsNullOrWhiteSpace(linea_analisis_streamlinkrc) = False Then
-                            If linea_analisis_streamlinkrc.Replace(" ", "").StartsWith("#") = False Then
-                                linea_analisis_streamlinkrc = "#" & linea_analisis_streamlinkrc
+                    textbox_analysis_streamlinkrc.Text = IO.File.ReadAllText("Releases\Streamlink\streamlinkrc", Encoding.UTF8)
+                    For i_line_analysis_streamlinkrc As Integer = 0 To textbox_analysis_streamlinkrc.Lines.Count - 1
+                        Dim line_analysis_streamlinkrc As String = textbox_analysis_streamlinkrc.Lines(i_line_analysis_streamlinkrc)
+                        If String.IsNullOrWhiteSpace(line_analysis_streamlinkrc) = False Then
+                            If line_analysis_streamlinkrc.Replace(" ", "").StartsWith("#") = False Then
+                                line_analysis_streamlinkrc = "#" & line_analysis_streamlinkrc
                             End If
                         End If
-                        streamlinkrc_final_modded += linea_analisis_streamlinkrc & vbNewLine
+                        streamlinkrc_final_modded += line_analysis_streamlinkrc & vbNewLine
                     Next
-                    textbox_analisis_streamlinkrc.Dispose()
+                    textbox_analysis_streamlinkrc.Dispose()
                     IO.File.WriteAllText("Releases\streamlinkrc", streamlinkrc_final_modded, Encoding.UTF8)
                     IO.File.Delete("Releases\Streamlink\streamlinkrc")
                 End If
 
-                'Chequeo de dependencias (Parte 2)
-                Dim DEPENDENCIAS_FALTANTES As String = ""
+                'Dependency check (Part 2)
+                Dim MISSED_DEPENDENCIES As String = ""
                 If String.IsNullOrEmpty(DEPENDENCY_CHK_FINAL) = False Then
-                    For Each linea_analisis_dep As String In DEPENDENCY_CHK_FINAL.Split({ControlChars.Cr, ControlChars.Lf})
-                        If String.IsNullOrEmpty(linea_analisis_dep) = False Then
-                            Dim dep_faltante As Boolean = True
-                            For Each fold_depend_chk As String In IO.Directory.GetDirectories("Releases\Streamlink")
-                                fold_depend_chk = fold_depend_chk.Replace("/", "\")
-                                If fold_depend_chk.Contains("\") Then
-                                    fold_depend_chk = fold_depend_chk.Remove(0, fold_depend_chk.LastIndexOf("\") + 1)
-                                End If
-                                If fold_depend_chk = linea_analisis_dep Then
-                                    dep_faltante = False
-                                End If
-                            Next
-                            If dep_faltante = True Then
-                                DEPENDENCIAS_FALTANTES += linea_analisis_dep & vbNewLine
+                    For Each line_analysis_dep As String In DEPENDENCY_CHK_FINAL.Split({ControlChars.Cr, ControlChars.Lf})
+                        If String.IsNullOrEmpty(line_analysis_dep) = False Then
+                            Dim missed_dep As Boolean = True
+                            If IO.Directory.Exists("Releases\Streamlink\" & line_analysis_dep) Or IO.File.Exists("Releases\Streamlink\" & line_analysis_dep & ".py") Then
+                                missed_dep = False
+                            End If
+                            If IO.Directory.Exists("Releases\Streamlink\Dependencies\" & line_analysis_dep) Or IO.File.Exists("Releases\Streamlink\Dependencies\" & line_analysis_dep & ".py") Then
+                                missed_dep = False
+                            End If
+                            If missed_dep = True Then
+                                MISSED_DEPENDENCIES += line_analysis_dep & vbNewLine
                             End If
                         End If
                     Next
-                    DEPENDENCIAS_FALTANTES = Regex.Replace(DEPENDENCIAS_FALTANTES, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
+                    MISSED_DEPENDENCIES = Regex.Replace(MISSED_DEPENDENCIES, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
                 End If
                 '
 
+                If IO.Directory.Exists("Releases\Streamlink\ffmpeg") Then
+                    IO.Directory.Move("Releases\Streamlink\ffmpeg", "Releases\Streamlink\Dependencies\ffmpeg")
+                End If
+                If IO.Directory.Exists("Releases\Streamlink\rtmpdump") Then
+                    IO.Directory.Move("Releases\Streamlink\rtmpdump", "Releases\Streamlink\Dependencies\rtmpdump")
+                End If
+                If IO.File.Exists("Releases\Streamlink\LICENSE.txt") Then
+                    IO.File.Move("Releases\Streamlink\LICENSE.txt", "Releases\LICENSE.txt")
+                End If
+
                 If Button1.Text = "Portable BAT" Then
                     IO.File.Copy("Files\Resources\BAT_BUILD.txt", "Releases\Streamlink.bat", True)
-                    BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
-                    BorrarArchivoSiExiste("Releases\TEMP_COMPILE.vb")
+                    DeleteDirectoryIfExists("Releases\TEMP_COMPILE_FILES")
+                    DeleteFileIfExists("Releases\TEMP_COMPILE.vb")
                 End If
 
                 If Button1.Text = "Portable EXE" Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
-                    BorrarDirectorioSiExiste("Releases\TEMP_COMPILE_FILES")
-                    BorrarArchivoSiExiste("Releases\TEMP_COMPILE.vb")
+                    DeleteDirectoryIfExists("Releases\TEMP_COMPILE_FILES")
+                    DeleteFileIfExists("Releases\TEMP_COMPILE.vb")
                 End If
 
                 If Button1.Text = "Standalone EXE" Then
 
-                    EjecutarYEsperar("Files\7zip\7za.exe", "a " & Chr(34) & url_trabajo_app & "\Releases\Streamlink_Release.zip" & Chr(34) & " " & Chr(34) & url_trabajo_app & "\Releases\*" & Chr(34)) 'Si hay que comprimir
+                    RunAndWait("Files\7zip\7za.exe", "a " & Chr(34) & Current_EXE_Path & "\Releases\Streamlink_Release.zip" & Chr(34) & " " & Chr(34) & Current_EXE_Path & "\Releases\*" & Chr(34)) 'Si hay que comprimir
                     CompileCode(CodeDomProvider, "Files\Resources\STANDALONE_BUILD.vb", "Releases\Streamlink.exe", "STANDALONE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
 
-                    For Each archivin As String In IO.Directory.GetFiles("Releases", "*.*", SearchOption.TopDirectoryOnly)
-                        If (archivin.EndsWith("Streamlink.exe") Or archivin.EndsWith("README.txt") Or archivin.EndsWith("VERSION.txt") Or archivin.EndsWith("streamlinkrc")) = False Then
-                            IO.File.Delete(archivin)
+                    For Each File_TMP As String In IO.Directory.GetFiles("Releases", "*.*", SearchOption.TopDirectoryOnly)
+                        If (File_TMP.EndsWith("Streamlink.exe") Or File_TMP.EndsWith("LICENSE.txt") Or File_TMP.EndsWith("README.txt") Or File_TMP.EndsWith("VERSION.txt") Or File_TMP.EndsWith("streamlinkrc")) = False Then
+                            IO.File.Delete(File_TMP)
                         End If
                     Next
 
-                    For Each carpetin As String In IO.Directory.GetDirectories("Releases")
-                        IO.Directory.Delete(carpetin, True)
+                    For Each Folder_TMP As String In IO.Directory.GetDirectories("Releases")
+                        IO.Directory.Delete(Folder_TMP, True)
                     Next
 
                 End If
@@ -450,38 +459,38 @@ Public Class Form1
                 If IO.File.Exists("Files\TEMP\streamlinkrc_BACKUP") Then
                     FileSystem.Rename("Releases\streamlinkrc", "Releases\streamlinkrc_ORIGINAL")
                     IO.File.Move("Files\TEMP\streamlinkrc_BACKUP", "Releases\streamlinkrc")
-                    If getFileMd5("Releases\streamlinkrc") = getFileMd5("Releases\streamlinkrc_ORIGINAL") Then
+                    If getFileMD5("Releases\streamlinkrc") = getFileMD5("Releases\streamlinkrc_ORIGINAL") Then
                         IO.File.Delete("Releases\streamlinkrc_ORIGINAL")
                     End If
                 End If
 
-                'BorrarDirectorioSiExiste("Files\TEMP")
-                Desbloquear_Todos_Los_EXE("Releases")
+                'DeleteDirectoryIfExists("Files\TEMP")
+                Unlock_All_EXE("Releases")
 
-                IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_MD5.txt", getFileMd5("Files\TEMP\Streamlink_Latest.zip"), Encoding.UTF8)
+                IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_MD5.txt", getFileMD5("Files\TEMP\Streamlink_Latest.zip"), Encoding.UTF8)
 
                 Button3.Text = "Completed"
 
-                Dim release_version_show As String = RELEASE_VER_ACTUAL
-                If String.IsNullOrEmpty(release_version_show) Then
-                    release_version_show = VERSION_ACTUAL.Remove(7)
+                Dim Release_Version_Info As String = RELEASE_VER_CURRENT
+                If String.IsNullOrEmpty(Release_Version_Info) Then
+                    Release_Version_Info = CURRENT_VERSION.Remove(7)
                 Else
-                    If URL_ZIP_ARCHIVE_ACTUAL = "https://github.com/streamlink/streamlink/archive/master.zip" Then
-                        release_version_show = RELEASE_VER_ACTUAL & " (with the latest commits)"
+                    If URL_ZIP_ARCHIVE_CURRENT = "https://github.com/streamlink/streamlink/archive/master.zip" Then
+                        Release_Version_Info = RELEASE_VER_CURRENT & " (with the latest commits)"
                     End If
                 End If
 
-                    If String.IsNullOrEmpty(DEPENDENCIAS_FALTANTES) Then
-                    Msgbox_THREADSAFE("Release " & release_version_show & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
+                If String.IsNullOrEmpty(MISSED_DEPENDENCIES) Then
+                    Msgbox_THREADSAFE("Release " & Release_Version_Info & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
                 Else
-                    IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are missing:" & vbNewLine & DEPENDENCIAS_FALTANTES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
-                    Msgbox_THREADSAFE("Release " & release_version_show & " was built with some errors." & vbNewLine & "You can find it inside the Releases folder." & vbNewLine & "Check ERRORS.txt for more info.", MsgBoxStyle.Exclamation, "Notice")
+                    IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are missing:" & vbNewLine & MISSED_DEPENDENCIES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
+                    Msgbox_THREADSAFE("Release " & Release_Version_Info & " was built with some errors." & vbNewLine & "You can find it inside the Releases folder." & vbNewLine & "Check ERRORS.txt for more info.", MsgBoxStyle.Exclamation, "Notice")
                 End If
 
-                'Reiniciar todos los valores (para generar una nueva version)
+                'Reset all values (to generate a new version)
                 Button2.Text = "Start downloading"
-                CambiarVisibilidadObjeto_THREADSAFE(Button4, True)
-                AcomodarPaddingButtonCustormURL()
+                ChangeObjectVisibility_THREADSAFE(Button4, True)
+                AdjustPaddingButtonCustomURL()
                 Button3.Text = "Pending"
                 '
 
@@ -492,84 +501,84 @@ Public Class Form1
 
     End Sub
 
-    Sub CambiarVisibilidadObjeto_THREADSAFE(ByVal OBJETO As Object, ByVal Visibilidad As Boolean)
+    Sub ChangeObjectVisibility_THREADSAFE(ByVal Req_Object As Object, ByVal Visibility As Boolean)
         Me.Invoke(DirectCast(Sub()
-                                 OBJETO.visible = Visibilidad
+                                 Req_Object.visible = Visibility
                              End Sub, MethodInvoker))
     End Sub
 
-    Private Function getFileMd5(ByVal filePath As String) As String
-        ' get all the file contents
+    Private Function getFileMD5(ByVal filePath As String) As String
+        ' Get all the file contents
         Dim File() As Byte = System.IO.File.ReadAllBytes(filePath)
 
-        ' create a new md5 object
-        Dim Md5 As New MD5CryptoServiceProvider()
+        ' Create a new MD5 object
+        Dim MD5 As New MD5CryptoServiceProvider()
 
-        ' compute the hash
-        Dim byteHash() As Byte = Md5.ComputeHash(File)
+        ' Compute the hash
+        Dim byteHash() As Byte = MD5.ComputeHash(File)
 
-        ' return the value in base 64 
+        ' Return the value in base 64 
         Return Convert.ToBase64String(byteHash)
     End Function
 
 
-    Function Finalizar_Todos_Los_EXE(ByVal ruta As String)
-        Dim SourceDir As DirectoryInfo = New DirectoryInfo(ruta)
+    Function Kill_All_EXE(ByVal path As String)
+        Dim SourceDir As DirectoryInfo = New DirectoryInfo(path)
         Dim pathIndex As Integer
 
         If SourceDir.Exists Then
-            pathIndex = ruta.LastIndexOf("\")
+            pathIndex = path.LastIndexOf("\")
             For Each childFile As FileInfo In SourceDir.GetFiles("*", SearchOption.AllDirectories).Where(Function(file) file.Extension.ToLower = ".exe")
                 For Each prog As Process In Process.GetProcesses
                     If prog.ProcessName = childFile.Name.Remove(childFile.Name.LastIndexOf(".")) Then
-                        prog.Kill() 'Matar proceso encontrado en la ubicacion actual
-                        prog.WaitForExit() 'Esperar hasta que el proceso se haya ido
+                        prog.Kill() 'Kill current process
+                        prog.WaitForExit() 'Wait until the process is gone
                     End If
                 Next
             Next
         Else
-            Console.WriteLine("El directorio donde se deben finalizar los procesos no existe")
+            Console.WriteLine("The directory does not exist :(")
         End If
 
     End Function
 
-    Function Desbloquear_Todos_Los_EXE(ByVal ruta As String)
-        On Error Resume Next 'Solo usar para este programa, ya que lo normal es disparar un error
-        Dim SourceDir As DirectoryInfo = New DirectoryInfo(ruta)
+    Function Unlock_All_EXE(ByVal path As String)
+        On Error Resume Next 'To avoid very common errors
+        Dim SourceDir As DirectoryInfo = New DirectoryInfo(path)
         Dim pathIndex As Integer
 
         If SourceDir.Exists Then
-            pathIndex = ruta.LastIndexOf("\")
+            pathIndex = path.LastIndexOf("\")
             For Each childFile As FileInfo In SourceDir.GetFiles("*", SearchOption.AllDirectories).Where(Function(file) file.Extension.ToLower = ".exe")
-                FileUnblocker.UnblockFile(childFile.FullName) 'Desbloquear el .EXE actual
+                FileUnblocker.UnblockFile(childFile.FullName) 'Unlock current .EXE
             Next
         Else
-            Console.WriteLine("El directorio donde necesito desbloquear archivos no existe :(")
+            Console.WriteLine("The directory does not exist :(")
         End If
     End Function
 
     Sub MoveAllItems(ByVal fromPath As String, ByVal toPath As String)
-        ''Create the target directory if necessary
+        'Create the target directory if necessary
         Dim toPathInfo = New DirectoryInfo(toPath)
         If (Not toPathInfo.Exists) Then
             toPathInfo.Create()
         End If
         Dim fromPathInfo = New DirectoryInfo(fromPath)
-        ''move all files
+        'Move all files
         For Each file As FileInfo In fromPathInfo.GetFiles()
             file.MoveTo(Path.Combine(toPath, file.Name))
         Next
-        ''move all folders
+        'Move all folders
         For Each dir As DirectoryInfo In fromPathInfo.GetDirectories()
             dir.MoveTo(Path.Combine(toPath, dir.Name))
         Next
     End Sub
 
 
-    Function ObtenerETAG_HTTPHEADER(ByVal URL As String) As String
+    Function GetETAG_HTTPHEADER(ByVal URL As String) As String
         ' Creates an HttpWebRequest with the specified URL. 
         myHttpWebRequest = CType(WebRequest.Create(URL), HttpWebRequest)
-        'Establecer el metodo de entrega
+        'Set request method
         myHttpWebRequest.Method = "HEAD"
         ' Sends the HttpWebRequest and waits for a response.
         myHttpWebResponse = CType(myHttpWebRequest.GetResponse(), HttpWebResponse)
@@ -600,10 +609,10 @@ Public Class Form1
         ' End Sub)
     End Sub
 
-    Sub CancelarInteraccionesInternet()
+    Sub Cancel_Internet_Interactions()
         On Error Resume Next
-        Descargador_HTML.CancelAsync()
-        'Descargador_HTML.Dispose()
+        DATA_Downloader.CancelAsync()
+        'DATA_Downloader.Dispose()
         myHttpWebRequest.Abort()
         myHttpWebResponse.Close()
         myHttpWebResponse.Dispose()
@@ -611,38 +620,38 @@ Public Class Form1
 
     Private Sub Form1_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
         On Error Resume Next
-        Descargador_HTML.CancelAsync()
-        Descargador_HTML.Dispose()
-        BW_PASOS.CancelAsync()
-        BW_PASOS.CancelImmediately()
-        BW_PASOS.Dispose()
+        DATA_Downloader.CancelAsync()
+        DATA_Downloader.Dispose()
+        BW_STEPS.CancelAsync()
+        BW_STEPS.CancelImmediately()
+        BW_STEPS.Dispose()
         Process.GetCurrentProcess.Kill()
     End Sub
 
-    Function Msgbox_THREADSAFE(ByVal Mensaje As String, ByVal Estilo As MsgBoxStyle, ByVal Titulo As String)
+    Function Msgbox_THREADSAFE(ByVal Message As String, ByVal Style As MsgBoxStyle, ByVal Title As String)
         THREADSAFE_CALL(Sub()
-                            MsgBox(Mensaje, Estilo, Titulo)
+                            MsgBox(Message, Style, Title)
                         End Sub)
     End Function
 
-    Function Msgbox_Interactive_THREADSAFE(ByVal Mensaje As String, ByVal Titulo As String, ByVal Botones As MessageBoxButtons, ByVal Icono As MessageBoxIcon)
+    Function Msgbox_Interactive_THREADSAFE(ByVal Message As String, ByVal Title As String, ByVal Buttons As MessageBoxButtons, ByVal Icon As MessageBoxIcon)
         Dim msgbox_result As Integer = MsgBoxResult.No
         THREADSAFE_CALL(Sub()
-                            msgbox_result = MessageBox.Show(Mensaje, Titulo, Botones, Icono)
+                            msgbox_result = MessageBox.Show(Message, Title, Buttons, Icon)
                         End Sub)
         Return msgbox_result
     End Function
 
-    Function EjecutarYEsperar(ByVal Ruta As String, ByVal Argumentos As String)
+    Function RunAndWait(ByVal Path As String, ByVal Arguments As String)
 
-        If IO.File.Exists(Ruta) = False Then
+        If IO.File.Exists(Path) = False Then
             Msgbox_THREADSAFE("A required file is missing :(", MsgBoxStyle.Critical, "Error")
             Process.GetCurrentProcess.Kill()
         End If
 
         Dim umaka As New Process
-        umaka.StartInfo.FileName = Ruta
-        umaka.StartInfo.Arguments = Argumentos
+        umaka.StartInfo.FileName = Path
+        umaka.StartInfo.Arguments = Arguments
         umaka.StartInfo.WindowStyle = ProcessWindowStyle.Hidden
         umaka.Start()
         umaka.WaitForExit()
@@ -650,71 +659,71 @@ Public Class Form1
 
     Private Sub Form1_KeyUp(sender As Object, e As KeyEventArgs) Handles Me.KeyUp
         If e.KeyCode = Keys.Escape Then
-            'Si se presiona ESC se quita el foco
+            'If ESC is pressed, focus is removed
             Panel2.Focus()
             Panel2.Select()
             '
         End If
     End Sub
 
-    Public Shared Function CompileCode(ByVal provider As CodeDomProvider, ByVal sourceFile As String, ByVal exeFile As String, ByVal PROYECTO_SOLICITADO As String, ByVal PROYECTO_DEPENDENCIAS_ARCHIVO As String) As Boolean
+    Public Shared Function CompileCode(ByVal provider As CodeDomProvider, ByVal sourceFile As String, ByVal exeFile As String, ByVal REQUESTED_PROJECT As String, ByVal ProjectDependenciesFile As String) As Boolean
 
-        ' Configurar dependencias e importaciones basadas en el proyecto actual
+        ' Configure dependencies and imports based on the current project
         Dim DLL_References_List As New List(Of String)
         Dim DLL_Calls_Imports_List As New List(Of String)
-        Dim proyect_route As String = url_trabajo_app
-        proyect_route = proyect_route.Replace("/", "\")
-        proyect_route = proyect_route.Remove(proyect_route.LastIndexOf("\"))
-        proyect_route = proyect_route.Remove(proyect_route.LastIndexOf("\"))
-        Dim pj_route_encontrada As String = PROYECTO_DEPENDENCIAS_ARCHIVO
-        If String.IsNullOrEmpty(pj_route_encontrada) Then
-            For Each archivin_posible_pj As String In IO.Directory.GetFiles(proyect_route, "*.vbproj", IO.SearchOption.TopDirectoryOnly)
-                pj_route_encontrada = archivin_posible_pj
+        Dim Projectpath As String = Current_EXE_Path
+        Projectpath = Projectpath.Replace("/", "\")
+        Projectpath = Projectpath.Remove(Projectpath.LastIndexOf("\"))
+        Projectpath = Projectpath.Remove(Projectpath.LastIndexOf("\"))
+        Dim Found_PJ_Path As String = ProjectDependenciesFile
+        If String.IsNullOrEmpty(Found_PJ_Path) Then
+            For Each Possible_PJ_File As String In IO.Directory.GetFiles(Projectpath, "*.vbproj", IO.SearchOption.TopDirectoryOnly)
+                Found_PJ_Path = Possible_PJ_File
             Next
         End If
-        Dim analisis_pj As String = IO.File.ReadAllText(pj_route_encontrada, Encoding.UTF8)
-        For Each linea_analisis_pj As String In analisis_pj.Split({ControlChars.Cr, ControlChars.Lf})
-            If linea_analisis_pj.Contains("<Reference Include=") Then
-                linea_analisis_pj = linea_analisis_pj.Remove(0, linea_analisis_pj.IndexOf(Chr(34)) + 1)
-                linea_analisis_pj = linea_analisis_pj.Remove(linea_analisis_pj.IndexOf(Chr(34)))
-                linea_analisis_pj += ".dll"
-                DLL_References_List.Add(linea_analisis_pj)
+        Dim analysis_pj As String = IO.File.ReadAllText(Found_PJ_Path, Encoding.UTF8)
+        For Each line_analysis_pj As String In analysis_pj.Split({ControlChars.Cr, ControlChars.Lf})
+            If line_analysis_pj.Contains("<Reference Include=") Then
+                line_analysis_pj = line_analysis_pj.Remove(0, line_analysis_pj.IndexOf(Chr(34)) + 1)
+                line_analysis_pj = line_analysis_pj.Remove(line_analysis_pj.IndexOf(Chr(34)))
+                line_analysis_pj += ".dll"
+                DLL_References_List.Add(line_analysis_pj)
             End If
-            If linea_analisis_pj.Contains("<Import Include=") Then
-                linea_analisis_pj = linea_analisis_pj.Remove(0, linea_analisis_pj.IndexOf(Chr(34)) + 1)
-                linea_analisis_pj = linea_analisis_pj.Remove(linea_analisis_pj.IndexOf(Chr(34)))
-                DLL_Calls_Imports_List.Add(linea_analisis_pj.ToLower)
+            If line_analysis_pj.Contains("<Import Include=") Then
+                line_analysis_pj = line_analysis_pj.Remove(0, line_analysis_pj.IndexOf(Chr(34)) + 1)
+                line_analysis_pj = line_analysis_pj.Remove(line_analysis_pj.IndexOf(Chr(34)))
+                DLL_Calls_Imports_List.Add(line_analysis_pj.ToLower)
             End If
         Next
 
-        Dim analisis_class As String = IO.File.ReadAllText(sourceFile, Encoding.UTF8)
-        For Each linea_analisis_class As String In analisis_class.Split({ControlChars.Cr, ControlChars.Lf})
-            linea_analisis_class = linea_analisis_class.Replace(" ", "")
-            linea_analisis_class = linea_analisis_class.ToLower
-            If String.IsNullOrEmpty(linea_analisis_class) = False Then
-                If linea_analisis_class.StartsWith("imports") Then
-                    linea_analisis_class = linea_analisis_class.Remove(0, linea_analisis_class.IndexOf("imports") + 7)
-                    If DLL_Calls_Imports_List.Contains(linea_analisis_class) Then
-                        DLL_Calls_Imports_List.Remove(linea_analisis_class)
+        Dim analysis_class As String = IO.File.ReadAllText(sourceFile, Encoding.UTF8)
+        For Each line_analysis_class As String In analysis_class.Split({ControlChars.Cr, ControlChars.Lf})
+            line_analysis_class = line_analysis_class.Replace(" ", "")
+            line_analysis_class = line_analysis_class.ToLower
+            If String.IsNullOrEmpty(line_analysis_class) = False Then
+                If line_analysis_class.StartsWith("imports") Then
+                    line_analysis_class = line_analysis_class.Remove(0, line_analysis_class.IndexOf("imports") + 7)
+                    If DLL_Calls_Imports_List.Contains(line_analysis_class) Then
+                        DLL_Calls_Imports_List.Remove(line_analysis_class)
                     End If
                 End If
             End If
         Next
 
-        Dim importaciones_genericas As String = ""
+        Dim generic_imports As String = ""
         For Each imports_final As String In DLL_Calls_Imports_List
-            importaciones_genericas += "Imports " & imports_final & vbNewLine
+            generic_imports += "Imports " & imports_final & vbNewLine
         Next
 
-        If String.IsNullOrEmpty(importaciones_genericas) = False Then
-            analisis_class = "'Declaraciones genericas" & vbNewLine & importaciones_genericas & "'" & vbNewLine & analisis_class
+        If String.IsNullOrEmpty(generic_imports) = False Then
+            analysis_class = "'Declaraciones genericas" & vbNewLine & generic_imports & "'" & vbNewLine & analysis_class
         End If
 
-        IO.File.WriteAllText("Releases\TEMP_COMPILE.vb", analisis_class, Encoding.UTF8)
+        IO.File.WriteAllText("Releases\TEMP_COMPILE.vb", analysis_class, Encoding.UTF8)
         sourceFile = "Releases\TEMP_COMPILE.vb"
-        If PROYECTO_SOLICITADO = "STANDALONE_EXE" Then
-            DLL_References_List.Add("System.IO.Compression.dll") 'Agregar soporte ZIP (obligatorio)
-            DLL_References_List.Add("System.IO.Compression.FileSystem.dll") 'Agregar soporte ZIP (obligatorio)
+        If REQUESTED_PROJECT = "STANDALONE_EXE" Then
+            DLL_References_List.Add("System.IO.Compression.dll") 'Add ZIP support (required)
+            DLL_References_List.Add("System.IO.Compression.FileSystem.dll") 'Add ZIP support (required)
         End If
         Dim referenceAssemblies As String() = DLL_References_List.ToArray
         '
@@ -757,8 +766,8 @@ Public Class Form1
         'cp.MainClass = "Samples.Class1"
         'End If
 
-        'Generar recursos necesarios
-        If PROYECTO_SOLICITADO = "STANDALONE_EXE" Then
+        'Generate needed resources
+        If REQUESTED_PROJECT = "STANDALONE_EXE" Then
             cp.EmbeddedResources.Add("Releases\STREAMLINK_RELEASE.zip")
             cp.EmbeddedResources.Add("Releases\VERSION.txt")
             IO.File.WriteAllText("Releases\RANDOM_ID.txt", New RandomPassword().Generate(20))
@@ -834,22 +843,23 @@ Public Class Form1
         Return Nothing
     End Function
 
-    Private Sub Descargador_HTML_DownloadProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs) Handles Descargador_HTML.DownloadProgressChanged
-        Descargador_HTML_ProgressActual = e.ProgressPercentage & "%"
+    Private Sub DATA_Downloader_DownloadProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs) Handles DATA_Downloader.DownloadProgressChanged
+        DATA_Downloader_CurrentProgress = e.ProgressPercentage & "%"
     End Sub
 
     Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
         If Button2.Text = "Start downloading" Then
-            If BW_PASOS.IsBusy = False Then
-                Dim URL_ZIP_TEMP_ARCHIVE As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_ACTUAL, Me)
-                If String.IsNullOrWhiteSpace(URL_ZIP_TEMP_ARCHIVE) = False Then
-                    If URL_ZIP_TEMP_ARCHIVE.ToLower.StartsWith("http") Then
-                        URL_ZIP_ARCHIVE_ACTUAL = URL_ZIP_TEMP_ARCHIVE
+            If BW_STEPS.IsBusy = False Then
+                Dim URL_ZIP_ARCHIVE_TEMP As String = InputBox_General_Custom.AbrirInputBox("Custom download", "Enter a ZIP archive URL", URL_ZIP_ARCHIVE_CURRENT, Me)
+                If String.IsNullOrWhiteSpace(URL_ZIP_ARCHIVE_TEMP) = False Then
+                    If URL_ZIP_ARCHIVE_TEMP.ToLower.StartsWith("http") Then
+                        URL_ZIP_ARCHIVE_CURRENT = URL_ZIP_ARCHIVE_TEMP
                     End If
                 End If
             End If
         End If
     End Sub
+
 End Class
 
 Public Class FileUnblocker
