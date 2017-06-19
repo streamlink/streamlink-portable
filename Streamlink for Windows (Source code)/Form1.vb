@@ -28,6 +28,7 @@ Public Class Form1
     Dim DEPENDENCY_CHK_FINAL As String = ""
     Dim CURRENT_VERSION As String = ""
     Dim RELEASE_VER_CURRENT As String = ""
+    Dim RELEASE_FILE_EXT_CURRENT As String = ".exe"
     '
 
     Public WithEvents BW_STEPS As New ExtendedBackgroundWorker
@@ -130,10 +131,13 @@ Public Class Form1
         If Button2.Text = "Start downloading" Then
             If sender.text = "Portable EXE" Then
                 Button1.Text = "Standalone EXE"
+                RELEASE_FILE_EXT_CURRENT = ".exe"
             ElseIf sender.text = "Standalone EXE" Then
                 Button1.Text = "Portable BAT"
+                RELEASE_FILE_EXT_CURRENT = ".bat"
             Else
                 Button1.Text = "Portable EXE"
+                RELEASE_FILE_EXT_CURRENT = ".exe"
             End If
         End If
     End Sub
@@ -354,7 +358,7 @@ Public Class Form1
 
                 Button3.Text = "Loading (3/3)"
 
-                Dim README_CONTENT As String = "Usage from cmd:" & vbNewLine & "Streamlink.exe ARGUMENTS" & vbNewLine & vbNewLine & "For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io"
+                Dim README_CONTENT As String = "Direct usage:" & vbNewLine & "Run Streamlink" & RELEASE_FILE_EXT_CURRENT & " and type the desired arguments" & vbNewLine & vbNewLine & "Usage from cmd:" & vbNewLine & "Streamlink" & RELEASE_FILE_EXT_CURRENT & " ARGUMENTS" & vbNewLine & vbNewLine & "For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io"
                 IO.File.WriteAllText("Releases\README.txt", README_CONTENT)
 
                 RELEASE_VER_CURRENT = "Releases\Streamlink\streamlink\__init__.py"
@@ -440,7 +444,6 @@ Public Class Form1
                 End If
 
                 If Button1.Text = "Standalone EXE" Then
-
                     RunAndWait("Files\7zip\7za.exe", "a " & Chr(34) & Current_EXE_Path & "\Releases\Streamlink_Release.zip" & Chr(34) & " " & Chr(34) & Current_EXE_Path & "\Releases\*" & Chr(34)) 'Si hay que comprimir
                     CompileCode(CodeDomProvider, "Files\Resources\STANDALONE_BUILD.vb", "Releases\Streamlink.exe", "STANDALONE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
 

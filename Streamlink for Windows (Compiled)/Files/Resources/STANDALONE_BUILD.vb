@@ -19,6 +19,7 @@ Imports System.Threading
 Module Module1
     Public url_trabajo_app As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
     Sub Main()
+        Dim CMD_INVOKED As Boolean = True
         Try
             SetConsoleCtrlHandler(New HandlerRoutine(AddressOf ControlHandler), True)
             url_trabajo_app = url_trabajo_app.Replace("file:///", "")
@@ -64,6 +65,17 @@ Module Module1
                 End If
             End If
 
+            If String.IsNullOrWhiteSpace(argumentos_finales) Then
+                CMD_INVOKED = False
+                Console.Title = "Streamlink for Windows"
+                Console.Clear()
+                Console.WriteLine("Welcome to Streamlink for Windows")
+                Console.WriteLine("Type a valid commmand:")
+                Console.WriteLine("")
+                argumentos_finales = Console.ReadLine()
+                Console.Clear()
+            End If
+
             Dim requiere_extraccion As Boolean = True
             Dim RANDOM_ID_ACTUAL As String = ""
 
@@ -85,24 +97,24 @@ Module Module1
                 End If
                 Dim temp_random_id_anterior As String = temp_patch_rtv & "\RANDOM_ID.txt"
                 Dim temp_random_id_embed As String = temp_patch_rtv & "\RANDOM_ID_EMBED.txt"
-                    BorrarArchivoSiExiste(temp_random_id_embed)
-                    Dim _assembly2 As [Assembly] = [Assembly].GetExecutingAssembly()
+                BorrarArchivoSiExiste(temp_random_id_embed)
+                Dim _assembly2 As [Assembly] = [Assembly].GetExecutingAssembly()
                 Dim _filestream2 As Stream = _assembly2.GetManifestResourceStream("RANDOM_ID.txt")
                 CopyStream(_filestream2, temp_random_id_embed)
                 RANDOM_ID_ACTUAL = IO.File.ReadAllText(temp_random_id_embed, Encoding.UTF8)
-                    If IO.File.Exists(temp_random_id_anterior) Then
-                        If IO.File.ReadAllText(temp_random_id_anterior, Encoding.UTF8) = IO.File.ReadAllText(temp_random_id_embed, Encoding.UTF8) Then
-                            requiere_extraccion = False
-                        Else
-                            requiere_extraccion = True
-                        End If
+                If IO.File.Exists(temp_random_id_anterior) Then
+                    If IO.File.ReadAllText(temp_random_id_anterior, Encoding.UTF8) = IO.File.ReadAllText(temp_random_id_embed, Encoding.UTF8) Then
+                        requiere_extraccion = False
                     Else
                         requiere_extraccion = True
                     End If
-
+                Else
+                    requiere_extraccion = True
                 End If
 
-                If requiere_extraccion = True Then
+            End If
+
+            If requiere_extraccion = True Then
                 Console.WriteLine("[Streamlink] Extracting program ...")
                 Finalizar_Todos_Los_EXE(temp_patch_rtv)
                 BorrarDirectorioSiExiste(temp_patch_rtv)
@@ -165,16 +177,30 @@ Module Module1
             info.UseShellExecute = False
             Dim proc = Process.Start(info)
             proc.WaitForExit()
-            Console.WriteLine("[End of Streamlink for Windows]")
-            Environment.Exit(Proc.ExitCode)
+            Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
+
+            If CMD_INVOKED = False Then
+                Console.ReadKey()
+            End If
+
+            Environment.Exit(proc.ExitCode)
         Catch ex As Exception
             Console.WriteLine("[Streamlink] An error occurred")
+
+            If CMD_INVOKED = False Then
+                Console.ReadKey()
+            End If
+
         End Try
         'Threading.Thread.Sleep(Threading.Timeout.Infinite)
     End Sub
 
     Public Function ControlHandler(ByVal ctrlType As CtrlTypes) As Boolean
-        Threading.Thread.Sleep(Timeout.Infinite)
+        If ctrlType = CtrlTypes.CTRL_BREAK_EVENT Or ctrlType = CtrlTypes.CTRL_C_EVENT Then
+            Return True 'If Ctrl+C or Ctrl+Break is pressed do nothing
+        Else
+            Environment.Exit(0) 'Shutdown app in other cases
+        End If
     End Function
 
     Public Declare Auto Function SetConsoleCtrlHandler Lib "kernel32.dll" (ByVal Handler As HandlerRoutine, ByVal Add As Boolean) As Boolean

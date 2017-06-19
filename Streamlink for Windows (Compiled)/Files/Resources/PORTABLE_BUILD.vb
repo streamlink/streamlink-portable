@@ -55,6 +55,18 @@ Module Module1
             End If
         End If
 
+        Dim CMD_INVOKED As Boolean = True
+        If String.IsNullOrWhiteSpace(argumentos_finales) Then
+            CMD_INVOKED = False
+            Console.Title = "Streamlink for Windows"
+            Console.Clear()
+            Console.WriteLine("Welcome to Streamlink for Windows")
+            Console.WriteLine("Type a valid commmand:")
+            Console.WriteLine("")
+            argumentos_finales = Console.ReadLine()
+            Console.Clear()
+        End If
+
         If IO.File.Exists(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py") Then
             Dim textbox_analisis_StreamlinkConstants As New TextBox
             Dim StreamlinkConstants_final_modded As String = ""
@@ -103,13 +115,22 @@ Module Module1
         info.UseShellExecute = False
         Dim proc = Process.Start(info)
         proc.WaitForExit()
-        'Threading.Thread.Sleep(Threading.Timeout.Infinite)
-        Console.WriteLine("[End of Streamlink for Windows]")
-        Environment.Exit(Proc.ExitCode)
+        Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
+
+        If CMD_INVOKED = False Then
+            Console.ReadKey()
+        End If
+
+        Environment.Exit(proc.ExitCode)
+
     End Sub
 
     Public Function ControlHandler(ByVal ctrlType As CtrlTypes) As Boolean
-        Threading.Thread.Sleep(Timeout.Infinite)
+        If ctrlType = CtrlTypes.CTRL_BREAK_EVENT Or ctrlType = CtrlTypes.CTRL_C_EVENT Then
+            Return True 'If Ctrl+C or Ctrl+Break is pressed do nothing
+        Else
+            Environment.Exit(0) 'Shutdown app in other cases
+        End If
     End Function
 
     Public Declare Auto Function SetConsoleCtrlHandler Lib "kernel32.dll" (ByVal Handler As HandlerRoutine, ByVal Add As Boolean) As Boolean
