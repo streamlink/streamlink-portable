@@ -18,7 +18,7 @@ Public Class Form1
     Dim UserAgent_2 As String = "Dalvik/1.6.0 (Linux; U; Android 4.4.2; TegraNote-P1640 Build/KOT49H)" 'Android (Tablet)
     Dim UserAgent_3 As String = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0" 'Windows (Desktop)
 
-    'For work with WebRequest y WebResponse
+    'To work with WebRequest y WebResponse
     Dim myHttpWebRequest As HttpWebRequest
     Dim myHttpWebResponse As HttpWebResponse
     '
@@ -223,6 +223,13 @@ Public Class Form1
                     End If
                 End If
 
+                If IO.File.Exists("Files\TEMP\Streamlink_Latest_GIT.txt") Then
+                    Dim vers_check As String = IO.File.ReadAllText("Files\TEMP\Streamlink_Latest_GIT.txt", Encoding.UTF8)
+                    If vers_check.Contains(CURRENT_VERSION) Then
+                        New_Version_Available = False
+                    End If
+                End If
+
                 Dim Redownload_Latest_Streamlink_ZIP As Boolean = True
                 If New_Version_Available = False And IO.File.Exists("Files\TEMP\Streamlink_Latest_MD5.txt") And IO.File.Exists("Files\TEMP\Streamlink_Latest.zip") Then
                     Dim MD5_previous As String = IO.File.ReadAllText("Files\TEMP\Streamlink_Latest_MD5.txt", Encoding.UTF8)
@@ -283,6 +290,7 @@ Public Class Form1
                 If IO.File.Exists("Files\TEMP\streamlink-master\script\makeinstaller.sh") Then
                     Dim Extra_Dependencies_Check As String = GetPageHTMLCustom("Files\TEMP\streamlink-master\script\makeinstaller.sh", UserAgent_1, "https://github.com")
                     Extra_Dependencies_Check = Extra_Dependencies_Check.Remove(0, Extra_Dependencies_Check.IndexOf("[Include]") + 10)
+                    Extra_Dependencies_Check = Extra_Dependencies_Check.Remove(0, Extra_Dependencies_Check.IndexOf("packages="))
                     Extra_Dependencies_Check = Extra_Dependencies_Check.Remove(Extra_Dependencies_Check.IndexOf("files="))
                     Extra_Dependencies_Check = Extra_Dependencies_Check.Replace(" ", "")
                     Dim Extra_Dependencies_Check_2 As String = ""
@@ -292,7 +300,9 @@ Public Class Form1
                         If ExtDependency_Check_TMP.Contains("=") Then
                             ExtDependency_Check_TMP = ExtDependency_Check_TMP.Remove(ExtDependency_Check_TMP.IndexOf("="))
                         End If
-                        Extra_Dependencies_Check_2 += ExtDependency_Check_TMP & vbNewLine
+                        If ExtDependency_Check_TMP.StartsWith(";") = False And ExtDependency_Check_TMP.StartsWith("-") = False Then
+                            Extra_Dependencies_Check_2 += ExtDependency_Check_TMP & vbNewLine
+                        End If
                     Next
                     Extra_Dependencies_Check = Extra_Dependencies_Check_2
                     'Adjust bundled packages
@@ -303,6 +313,7 @@ Public Class Form1
                     '
                     Extra_Dependencies_Check = Regex.Replace(Extra_Dependencies_Check, "^\s+$[\r\n]*", "", RegexOptions.Multiline)
                     DEPENDENCY_CHK_FINAL = Extra_Dependencies_Check
+                    'MsgBox(DEPENDENCY_CHK_FINAL)
                 End If
                 '
 
@@ -471,6 +482,7 @@ Public Class Form1
                 Unlock_All_EXE("Releases")
 
                 IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_MD5.txt", getFileMD5("Files\TEMP\Streamlink_Latest.zip"), Encoding.UTF8)
+                IO.File.WriteAllText("Files\TEMP\Streamlink_Latest_GIT.txt", CURRENT_VERSION, Encoding.UTF8)
 
                 Button3.Text = "Completed"
 
@@ -486,7 +498,7 @@ Public Class Form1
                 If String.IsNullOrEmpty(MISSED_DEPENDENCIES) Then
                     Msgbox_THREADSAFE("Release " & Release_Version_Info & " was successfully built." & vbNewLine & "You can find it inside the Releases folder.", MsgBoxStyle.Information, "Notice")
                 Else
-                    IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are missing:" & vbNewLine & MISSED_DEPENDENCIES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
+                    IO.File.WriteAllText("Releases\ERRORS.txt", "The following dependencies are probably missing:" & vbNewLine & MISSED_DEPENDENCIES & vbNewLine & "Possible solutions:" & vbNewLine & "-Check if a new version is available at https://github.com/streamlink/streamlink-portable" & vbNewLine & "-Manually add the dependencies to 'Files\Resources\Streamlink_Patches.zip' and build again." & vbNewLine & "-Use an older ZIP archive rather than latest snapshot")
                     Msgbox_THREADSAFE("Release " & Release_Version_Info & " was built with some errors." & vbNewLine & "You can find it inside the Releases folder." & vbNewLine & "Check ERRORS.txt for more info.", MsgBoxStyle.Exclamation, "Notice")
                 End If
 
@@ -526,6 +538,7 @@ Public Class Form1
 
 
     Function Kill_All_EXE(ByVal path As String)
+        On Error Resume Next
         Dim SourceDir As DirectoryInfo = New DirectoryInfo(path)
         Dim pathIndex As Integer
 
@@ -561,20 +574,22 @@ Public Class Form1
     End Function
 
     Sub MoveAllItems(ByVal fromPath As String, ByVal toPath As String)
-        'Create the target directory if necessary
-        Dim toPathInfo = New DirectoryInfo(toPath)
-        If (Not toPathInfo.Exists) Then
-            toPathInfo.Create()
-        End If
-        Dim fromPathInfo = New DirectoryInfo(fromPath)
-        'Move all files
-        For Each file As FileInfo In fromPathInfo.GetFiles()
-            file.MoveTo(Path.Combine(toPath, file.Name))
-        Next
-        'Move all folders
-        For Each dir As DirectoryInfo In fromPathInfo.GetDirectories()
-            dir.MoveTo(Path.Combine(toPath, dir.Name))
-        Next
+        My.Computer.FileSystem.MoveDirectory(fromPath, toPath, True)
+
+        ''Create the target directory if necessary
+        'Dim toPathInfo = New DirectoryInfo(toPath)
+        'If (Not toPathInfo.Exists) Then
+        '    toPathInfo.Create()
+        'End If
+        'Dim fromPathInfo = New DirectoryInfo(fromPath)
+        ''Move all files
+        'For Each file As FileInfo In fromPathInfo.GetFiles()
+        '    file.MoveTo(Path.Combine(toPath, file.Name))
+        'Next
+        ''Move all folders
+        'For Each dir As DirectoryInfo In fromPathInfo.GetDirectories()
+        '    dir.MoveTo(Path.Combine(toPath, dir.Name))
+        'Next
     End Sub
 
 
@@ -766,7 +781,7 @@ Public Class Form1
         'If provider.Supports(GeneratorSupport.EntryPointMethod) Then
         '    ' Specify the class that contains
         '    ' the main method of the executable.
-        'cp.MainClass = "Samples.Class1"
+        'cp.MainClass = "Module1"
         'End If
 
         'Generate needed resources

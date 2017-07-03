@@ -14,107 +14,110 @@ Imports System.Threading
 
 Module Module1
 
-    Public url_trabajo_app As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
+    Public Current_EXE_Path As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
+    Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
     Sub Main()
         On Error Resume Next
-        SetConsoleCtrlHandler(New HandlerRoutine(AddressOf ControlHandler), True)
-        url_trabajo_app = url_trabajo_app.Replace("file:///", "")
-        url_trabajo_app = url_trabajo_app.Replace("file:\", "")
-        url_trabajo_app = System.IO.Path.GetDirectoryName(url_trabajo_app)
-        url_trabajo_app = url_trabajo_app.Replace("file:///", "")
-        url_trabajo_app = url_trabajo_app.Replace("file:\", "")
+        AddHandler Console.CancelKeyPress, AddressOf Console_CancelKeyPress
+        Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
+        Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
+        Current_EXE_Path = System.IO.Path.GetDirectoryName(Current_EXE_Path)
+        Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
+        Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
 
-        Dim deteccion_path As String = url_trabajo_app.Remove(3)
-        deteccion_path = deteccion_path.Remove(0, 1)
-        deteccion_path = deteccion_path.Replace("/", "\")
-        If deteccion_path = ":\" = False And url_trabajo_app.StartsWith("\\") = False Then
-            If url_trabajo_app.StartsWith("\") Then
-                url_trabajo_app = "\" & url_trabajo_app
+        Dim Path_Detection As String = Current_EXE_Path.Remove(3)
+        Path_Detection = Path_Detection.Remove(0, 1)
+        Path_Detection = Path_Detection.Replace("/", "\")
+        If Path_Detection = ":\" = False And Current_EXE_Path.StartsWith("\\") = False Then
+            If Current_EXE_Path.StartsWith("\") Then
+                Current_EXE_Path = "\" & Current_EXE_Path
             Else
-                url_trabajo_app = "\\" & url_trabajo_app
+                Current_EXE_Path = "\\" & Current_EXE_Path
             End If
         End If
 
         Console.OutputEncoding = Encoding.UTF8
         Console.InputEncoding = Encoding.UTF8
 
-        Dim argumentos_finales As String = Environment.CommandLine
-        If argumentos_finales.StartsWith(Chr(34)) Then
-            argumentos_finales = argumentos_finales.Remove(0, 1)
-            argumentos_finales = argumentos_finales.Remove(0, argumentos_finales.IndexOf(Chr(34)))
-            If argumentos_finales.Contains(" ") Then
-                argumentos_finales = argumentos_finales.Remove(0, argumentos_finales.IndexOf(" "))
+        Dim Final_Args As String = Environment.CommandLine
+        If Final_Args.StartsWith(Chr(34)) Then
+            Final_Args = Final_Args.Remove(0, 1)
+            Final_Args = Final_Args.Remove(0, Final_Args.IndexOf(Chr(34)))
+            If Final_Args.Contains(" ") Then
+                Final_Args = Final_Args.Remove(0, Final_Args.IndexOf(" "))
             Else
-                argumentos_finales = ""
+                Final_Args = ""
             End If
         Else
-            If argumentos_finales.Contains(" ") Then
-                argumentos_finales = argumentos_finales.Remove(0, argumentos_finales.IndexOf(" "))
+            If Final_Args.Contains(" ") Then
+                Final_Args = Final_Args.Remove(0, Final_Args.IndexOf(" "))
             Else
-                argumentos_finales = ""
+                Final_Args = ""
             End If
         End If
 
         Dim CMD_INVOKED As Boolean = True
-        If String.IsNullOrWhiteSpace(argumentos_finales) Then
+        If String.IsNullOrWhiteSpace(Final_Args) Then
             CMD_INVOKED = False
             Console.Title = "Streamlink for Windows"
             Console.Clear()
             Console.WriteLine("Welcome to Streamlink for Windows")
             Console.WriteLine("Type a valid commmand:")
             Console.WriteLine("")
-            argumentos_finales = Console.ReadLine()
+            Final_Args = Console.ReadLine()
             Console.Clear()
         End If
 
-        If IO.File.Exists(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py") Then
-            Dim textbox_analisis_StreamlinkConstants As New TextBox
-            Dim StreamlinkConstants_final_modded As String = ""
-            textbox_analisis_StreamlinkConstants.Text = IO.File.ReadAllText(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py", Encoding.UTF8)
+        If IO.File.Exists(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py") Then
+            Dim TextBox_Analysis_StreamlinkConstants As New TextBox
+            Dim StreamlinkConstants_Final_Modded As String = ""
+            TextBox_Analysis_StreamlinkConstants.Text = IO.File.ReadAllText(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py", Encoding.UTF8)
 
             Dim WIN32_CHK_READY As Boolean = False
 
-            For i_linea_analisis_StreamlinkConstants As Integer = 0 To textbox_analisis_StreamlinkConstants.Lines.Count - 1
-                Dim linea_analisis_StreamlinkConstants As String = textbox_analisis_StreamlinkConstants.Lines(i_linea_analisis_StreamlinkConstants)
-                If String.IsNullOrWhiteSpace(linea_analisis_StreamlinkConstants) = False Then
+            For i_Line_Analysis_StreamlinkConstants As Integer = 0 To TextBox_Analysis_StreamlinkConstants.Lines.Count - 1
+                Dim Line_Analysis_StreamlinkConstants As String = TextBox_Analysis_StreamlinkConstants.Lines(i_Line_Analysis_StreamlinkConstants)
+                If String.IsNullOrWhiteSpace(Line_Analysis_StreamlinkConstants) = False Then
 
-                    If linea_analisis_StreamlinkConstants.Contains("if is_win32:") Then
+                    If Line_Analysis_StreamlinkConstants.Contains("if is_win32:") Then
                         WIN32_CHK_READY = True
                     End If
-                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("APPDATA =") Then
-                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("APPDATA ="))
-                        linea_analisis_StreamlinkConstants += "APPDATA = os.path.normpath(" & chr(34) & url_trabajo_app.Replace("\", "/") & chr(34) & ")"
+                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("APPDATA =") Then
+                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("APPDATA ="))
+                        Line_Analysis_StreamlinkConstants += "APPDATA = os.path.normpath(" & chr(34) & Current_EXE_Path.Replace("\", "/") & chr(34) & ")"
                     End If
-                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("CONFIG_FILES =") Then
-                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("CONFIG_FILES ="))
-                        linea_analisis_StreamlinkConstants += "CONFIG_FILES = [os.path.join(APPDATA, " & chr(34) & "streamlinkrc" & chr(34) & ")]"
+                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("CONFIG_FILES =") Then
+                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("CONFIG_FILES ="))
+                        Line_Analysis_StreamlinkConstants += "CONFIG_FILES = [os.path.join(APPDATA, " & chr(34) & "streamlinkrc" & chr(34) & ")]"
                     End If
-                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("PLUGINS_DIR =") Then
-                        linea_analisis_StreamlinkConstants = linea_analisis_StreamlinkConstants.Remove(linea_analisis_StreamlinkConstants.IndexOf("PLUGINS_DIR ="))
-                        linea_analisis_StreamlinkConstants += "PLUGINS_DIR = os.path.join(APPDATA, " & chr(34) & "plugins" & chr(34) & ")"
+                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("PLUGINS_DIR =") Then
+                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("PLUGINS_DIR ="))
+                        Line_Analysis_StreamlinkConstants += "PLUGINS_DIR = os.path.join(APPDATA, " & chr(34) & "plugins" & chr(34) & ")"
                     End If
-                    If WIN32_CHK_READY = True And linea_analisis_StreamlinkConstants.Contains("else:") Then
+                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("else:") Then
                         WIN32_CHK_READY = False
                     End If
 
                 End If
-                StreamlinkConstants_final_modded += linea_analisis_StreamlinkConstants & vbNewLine
+                StreamlinkConstants_Final_Modded += Line_Analysis_StreamlinkConstants & vbNewLine
             Next
-            textbox_analisis_StreamlinkConstants.Dispose()
-            IO.File.WriteAllText(url_trabajo_app & "\Streamlink\streamlink_cli\constants.py", StreamlinkConstants_final_modded, Encoding.UTF8)
+            TextBox_Analysis_StreamlinkConstants.Dispose()
+            IO.File.WriteAllText(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py", StreamlinkConstants_Final_Modded, Encoding.UTF8)
         End If
 
-        Dim DATOS_VER_ACTUAL As String = url_trabajo_app & "\VERSION.txt"
-        If IO.File.Exists(DATOS_VER_ACTUAL) Then
-            DATOS_VER_ACTUAL = IO.File.ReadAllText(DATOS_VER_ACTUAL, Encoding.UTF8)
-            Console.WriteLine("[Streamlink for Windows " & DATOS_VER_ACTUAL & "]")
+        Dim ACTUAL_VER_DATA As String = Current_EXE_Path & "\VERSION.txt"
+        If IO.File.Exists(ACTUAL_VER_DATA) Then
+            ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
+            Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
         Else
             Console.WriteLine("[Streamlink for Windows]")
         End If
-        Dim info = New ProcessStartInfo(Chr(34) & url_trabajo_app & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & url_trabajo_app & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & url_trabajo_app & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & url_trabajo_app & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & url_trabajo_app & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & argumentos_finales)
+        Dim info = New ProcessStartInfo(Chr(34) & Current_EXE_Path & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Current_EXE_Path & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & Final_Args)
         info.UseShellExecute = False
+        ENABLE_MAINPROGRAM_EXIT = False
         Dim proc = Process.Start(info)
         proc.WaitForExit()
+        ENABLE_MAINPROGRAM_EXIT = True
         Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
 
         If CMD_INVOKED = False Then
@@ -125,24 +128,12 @@ Module Module1
 
     End Sub
 
-    Public Function ControlHandler(ByVal ctrlType As CtrlTypes) As Boolean
-        If ctrlType = CtrlTypes.CTRL_BREAK_EVENT Or ctrlType = CtrlTypes.CTRL_C_EVENT Then
-            Return True 'If Ctrl+C or Ctrl+Break is pressed do nothing
+    Sub Console_CancelKeyPress(sender As Object, e As ConsoleCancelEventArgs)
+        If ENABLE_MAINPROGRAM_EXIT = False Then
+            e.Cancel = True
         Else
-            Environment.Exit(0) 'Shutdown app in other cases
+            Process.GetCurrentProcess.Kill()
         End If
-    End Function
-
-    Public Declare Auto Function SetConsoleCtrlHandler Lib "kernel32.dll" (ByVal Handler As HandlerRoutine, ByVal Add As Boolean) As Boolean
-
-    Public Delegate Function HandlerRoutine(ByVal CtrlType As CtrlTypes) As Boolean
-
-    Public Enum CtrlTypes
-        CTRL_C_EVENT = 0
-        CTRL_BREAK_EVENT
-        CTRL_CLOSE_EVENT
-        CTRL_LOGOFF_EVENT = 5
-        CTRL_SHUTDOWN_EVENT
-    End Enum
+    End Sub
 
 End Module
