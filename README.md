@@ -6,7 +6,7 @@ Inside the ZIP you will find two folders:
 * Streamlink for Windows (Compiled): The program executable, intended for end users.
 * Streamlink for Windows (Source code): The program source code, intended for developers.
 
-# FAQs:
+# FAQ:
 
 ### What is Streamlink Portable?
 A program to build a portable version of Streamlink for Windows.
@@ -14,7 +14,7 @@ A program to build a portable version of Streamlink for Windows.
 ### What are the supported platforms?
 Windows Vista SP2 or later with .NET Framework 4.5+.
 
-### What can i do with it?
+### What can I do with it?
 Build between three flavors:
 * Portable EXE (Recommended): For users who prefer to have all available files in the same folder.
 * Standalone EXE: For users who prefer to have all files packed within the executable.
@@ -22,12 +22,12 @@ Build between three flavors:
 
 By default the building source is the <a href="https://github.com/streamlink/streamlink/commits/master">latest available commit</a> (nightly).
 <br>
-No system files are modified and you can run it from anywhere (such as flash or external drives).
+No system files are modified and you can run it from anywhere (such as flash drive or other external drives).
 
-### Can i download a ready-to-use release without using the program?
+### Can I download a ready-to-use release without using the program?
 Yes, you can find precompiled releases <a href="https://github.com/streamlink/streamlink-portable/releases">here</a>.
 <br>
-Note that only stable releases are available, for nightly you have to use the builder.
+Note that only stable releases are available, for nightly builds you have to use the program.
 
 # Support:
 
