@@ -45,6 +45,9 @@ Module Module1
             Try
                 Console.OutputEncoding = Encoding.UTF8
                 Console.InputEncoding = Encoding.UTF8
+                Dim bufSize As Integer = 4096
+                Dim inStream As Stream = Console.OpenStandardInput(bufSize)
+                Console.SetIn(New StreamReader(inStream, Console.InputEncoding, False, bufSize))
             Catch
                 'Error defining encoding
             End Try

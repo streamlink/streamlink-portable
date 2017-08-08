@@ -2,6 +2,7 @@ Imports System.Reflection
 Imports System.Deployment
 Imports System.Text
 Imports System.Threading
+Imports System.IO
 
 <Assembly: AssemblyTitle("Streamlink for Windows")>
 <Assembly: AssemblyDescription("")>
@@ -18,6 +19,7 @@ Module Module1
     Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
     Sub Main()
         On Error Resume Next
+
         AddHandler Console.CancelKeyPress, AddressOf Console_CancelKeyPress
         Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
         Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
@@ -38,6 +40,9 @@ Module Module1
 
         Console.OutputEncoding = Encoding.UTF8
         Console.InputEncoding = Encoding.UTF8
+        Dim bufSize As Integer = 4096
+        Dim inStream As Stream = Console.OpenStandardInput(bufSize)
+        Console.SetIn(New StreamReader(inStream, Console.InputEncoding, False, bufSize))
 
         Dim Final_Args As String = Environment.CommandLine
         If Final_Args.StartsWith(Chr(34)) Then
