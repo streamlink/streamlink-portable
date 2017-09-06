@@ -19,8 +19,9 @@ Imports System.Threading
 Module Module1
     Public Current_EXE_Path As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
     Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
+    Dim CMD_INVOKED As Boolean = True
+    Public NO_CMD_HINTS As Boolean = False
     Sub Main()
-        Dim CMD_INVOKED As Boolean = True
         Try
             AddHandler Console.CancelKeyPress, AddressOf Console_CancelKeyPress
             Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
@@ -38,6 +39,10 @@ Module Module1
                 Else
                     Current_EXE_Path = "\\" & Current_EXE_Path
                 End If
+            End If
+
+            If IO.File.Exists(Current_EXE_Path & "\NO_CMD_HINTS") Then
+                NO_CMD_HINTS = True
             End If
 
             Dim Temp_Path_RTV As String = Path.GetTempPath & "\RTV_STREAMLINK_FOR_WINDOWS"
@@ -69,15 +74,17 @@ Module Module1
                 End If
             End If
 
-            If String.IsNullOrWhiteSpace(Final_Args) Then
-                CMD_INVOKED = False
-                Console.Title = "Streamlink for Windows"
-                Console.Clear()
-                Console.WriteLine("Welcome to Streamlink for Windows")
-                Console.WriteLine("Type a valid commmand:")
-                Console.WriteLine("")
-                Final_Args = Console.ReadLine()
-                Console.Clear()
+            If NO_CMD_HINTS = False Then
+                If String.IsNullOrWhiteSpace(Final_Args) Then
+                    CMD_INVOKED = False
+                    Console.Title = "Streamlink for Windows"
+                    Console.Clear()
+                    Console.WriteLine("Welcome to Streamlink for Windows")
+                    Console.WriteLine("Type a valid commmand:")
+                    Console.WriteLine("")
+                    Final_Args = Console.ReadLine()
+                    Console.Clear()
+                End If
             End If
 
             Dim Unzip_Required As Boolean = True
@@ -119,7 +126,9 @@ Module Module1
             End If
 
             If Unzip_Required = True Then
-                Console.WriteLine("[Streamlink] Extracting program ...")
+                If NO_CMD_HINTS = False Then
+                    Console.WriteLine("[Streamlink] Extracting program ...")
+                End If
                 Kill_All_EXE(Temp_Path_RTV)
                 DeleteDirectoryIfExists(Temp_Path_RTV)
                 IO.Directory.CreateDirectory(Temp_Path_RTV)
@@ -129,11 +138,13 @@ Module Module1
                 NativeUnzipFile(Temp_ZIP_Path_RTV, Temp_Path_RTV)
                 IO.File.Delete(Temp_ZIP_Path_RTV)
                 Unlock_All_EXE(Temp_Path_RTV) 'Try to unblock Streamlink temp path
-                Console.WriteLine("[Streamlink] Program successfully extracted")
+                If NO_CMD_HINTS = False Then
+                    Console.WriteLine("[Streamlink] Program successfully extracted")
+                End If
                 IO.File.WriteAllText(Temp_Path_RTV & "\RANDOM_ID.txt", ACTUAL_RANDOM_ID, Encoding.UTF8)
-            End If
+                End If
 
-            If IO.File.Exists(Temp_Path_RTV & "\Streamlink\streamlink_cli\constants.py") Then
+                If IO.File.Exists(Temp_Path_RTV & "\Streamlink\streamlink_cli\constants.py") Then
                 Dim TextBox_Analysis_StreamlinkConstants As New TextBox
                 Dim StreamlinkConstants_Final_Modded As String = ""
                 TextBox_Analysis_StreamlinkConstants.Text = IO.File.ReadAllText(Temp_Path_RTV & "\Streamlink\streamlink_cli\constants.py", Encoding.UTF8)
@@ -170,31 +181,41 @@ Module Module1
                 IO.File.WriteAllText(Temp_Path_RTV & "\Streamlink\streamlink_cli\constants.py", StreamlinkConstants_Final_Modded, Encoding.UTF8)
             End If
 
-            Dim ACTUAL_VER_DATA As String = Temp_Path_RTV & "\VERSION.txt"
-            If IO.File.Exists(ACTUAL_VER_DATA) Then
-                ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
-                Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
-            Else
-                Console.WriteLine("[Streamlink for Windows]")
+            If NO_CMD_HINTS = False Then
+                Dim ACTUAL_VER_DATA As String = Temp_Path_RTV & "\VERSION.txt"
+                If IO.File.Exists(ACTUAL_VER_DATA) Then
+                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
+                    Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
+                Else
+                    Console.WriteLine("[Streamlink for Windows]")
+                End If
             End If
+
             Dim info = New ProcessStartInfo(Chr(34) & Temp_Path_RTV & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Temp_Path_RTV & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Temp_Path_RTV & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Temp_Path_RTV & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & Final_Args)
             info.UseShellExecute = False
             ENABLE_MAINPROGRAM_EXIT = False
             Dim proc = Process.Start(info)
             proc.WaitForExit()
             ENABLE_MAINPROGRAM_EXIT = True
-            Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
 
-            If CMD_INVOKED = False Then
-                Console.ReadKey()
+            If NO_CMD_HINTS = False Then
+                Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
+            End If
+
+            If NO_CMD_HINTS = False Then
+                If CMD_INVOKED = False Then
+                    Console.ReadKey()
+                End If
             End If
 
             Environment.Exit(proc.ExitCode)
         Catch ex As Exception
             Console.WriteLine("[Streamlink] An error occurred")
 
-            If CMD_INVOKED = False Then
-                Console.ReadKey()
+            If NO_CMD_HINTS = False Then
+                If CMD_INVOKED = False Then
+                    Console.ReadKey()
+                End If
             End If
 
         End Try

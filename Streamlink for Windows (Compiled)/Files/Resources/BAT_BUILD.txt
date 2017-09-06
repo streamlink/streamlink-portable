@@ -3,17 +3,25 @@ REM Change the code page for UTF8
 chcp 65001 >NUL
 set PYTHONIOENCODING=cp65001
 
+set NO_CMD_HINTS=NO
 set CMD_INVOKED=NO
 set "STREAMLINK_ARGS=%*"
-if "%STREAMLINK_ARGS%" == "" (
-    set CMD_INVOKED=YES
-    title Streamlink for Windows
-    cls
-    echo Welcome to Streamlink for Windows
-    echo Type a valid commmand:
-    echo.
-    set /p STREAMLINK_ARGS=""
-    cls
+
+if exist "%~dp0\NO_CMD_HINTS" (
+    set NO_CMD_HINTS=YES
+)
+
+if "%NO_CMD_HINTS%" == "NO" (
+    if "%STREAMLINK_ARGS%" == "" (
+        set CMD_INVOKED=YES
+        title Streamlink for Windows
+        cls
+        echo Welcome to Streamlink for Windows
+        echo Type a valid commmand:
+        echo.
+        set /p STREAMLINK_ARGS=""
+        cls
+    )
 )
 
 set "STREAMLINK_VERSION="
@@ -21,16 +29,23 @@ if exist "%~dp0\VERSION.txt" (
     set /p STREAMLINK_VERSION=<"%~dp0\VERSION.txt"
 )
 
-if "%STREAMLINK_VERSION%" == "" (
-    echo [Streamlink for Windows]
-) else (
-    echo [Streamlink for Windows %STREAMLINK_VERSION%]
+if "%NO_CMD_HINTS%" == "NO" (
+    if "%STREAMLINK_VERSION%" == "" (
+	    echo [Streamlink for Windows]
+	) else (
+	    echo [Streamlink for Windows %STREAMLINK_VERSION%]
+	)
 )
 
 set errorlevel=
 "%~dp0\Python 3.5.2\python.exe" "%~dp0\Streamlink\Streamlink.py" --ffmpeg-ffmpeg "%~dp0\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" --rtmp-rtmpdump "%~dp0\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" --config "%~dp0\streamlinkrc" %STREAMLINK_ARGS% --no-version-check
-echo [End of Streamlink for Windows with ExitCode %errorlevel%]
 
-if "%CMD_INVOKED%" == "YES" (
-pause >nul
+if "%NO_CMD_HINTS%" == "NO" (
+    echo [End of Streamlink for Windows with ExitCode %errorlevel%]
+)
+
+if "%NO_CMD_HINTS%" == "NO" (
+    if "%CMD_INVOKED%" == "YES" (
+        pause >nul
+    )
 )
