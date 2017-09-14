@@ -369,7 +369,8 @@ Public Class Form1
 
                 Button3.Text = "Loading (3/3)"
 
-                Dim README_CONTENT As String = "Direct usage:" & vbNewLine & "Run Streamlink" & RELEASE_FILE_EXT_CURRENT & " and type the desired arguments" & vbNewLine & vbNewLine & "Usage from cmd:" & vbNewLine & "Streamlink" & RELEASE_FILE_EXT_CURRENT & " ARGUMENTS" & vbNewLine & vbNewLine & "For more info visit https://github.com/streamlink/streamlink or https://streamlink.github.io"
+                Dim README_CONTENT As String = IO.File.ReadAllText("Files\Resources\BUILD_README.txt", Encoding.UTF8)
+                README_CONTENT = README_CONTENT.Replace("%STREAMLINK_EXEC_FILE%", "Streamlink" & RELEASE_FILE_EXT_CURRENT)
                 IO.File.WriteAllText("Releases\README.txt", README_CONTENT)
 
                 RELEASE_VER_CURRENT = "Releases\Streamlink\streamlink\__init__.py"

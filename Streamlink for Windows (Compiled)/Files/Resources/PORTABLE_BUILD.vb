@@ -19,6 +19,8 @@ Module Module1
     Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
     Dim CMD_INVOKED As Boolean = True
     Public NO_CMD_HINTS As Boolean = False
+    Public LAST_EXIT_CODE As Integer = 0
+
     Sub Main()
         On Error Resume Next
 
@@ -76,77 +78,73 @@ Module Module1
                 Console.WriteLine("Type a valid commmand:")
                 Console.WriteLine("")
                 Final_Args = Console.ReadLine()
-                Console.Clear()
             End If
         End If
 
-        If IO.File.Exists(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py") Then
-            Dim TextBox_Analysis_StreamlinkConstants As New TextBox
-            Dim StreamlinkConstants_Final_Modded As String = ""
-            TextBox_Analysis_StreamlinkConstants.Text = IO.File.ReadAllText(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py", Encoding.UTF8)
+        LaunchStreamlink(Final_Args)
 
-            Dim WIN32_CHK_READY As Boolean = False
+        If NO_CMD_HINTS = False And CMD_INVOKED = False Then
+            Dim EXTRA_ARGS As String = ""
 
-            For i_Line_Analysis_StreamlinkConstants As Integer = 0 To TextBox_Analysis_StreamlinkConstants.Lines.Count - 1
-                Dim Line_Analysis_StreamlinkConstants As String = TextBox_Analysis_StreamlinkConstants.Lines(i_Line_Analysis_StreamlinkConstants)
-                If String.IsNullOrWhiteSpace(Line_Analysis_StreamlinkConstants) = False Then
-
-                    If Line_Analysis_StreamlinkConstants.Contains("if is_win32:") Then
-                        WIN32_CHK_READY = True
-                    End If
-                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("APPDATA =") Then
-                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("APPDATA ="))
-                        Line_Analysis_StreamlinkConstants += "APPDATA = os.path.normpath(" & chr(34) & Current_EXE_Path.Replace("\", "/") & chr(34) & ")"
-                    End If
-                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("CONFIG_FILES =") Then
-                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("CONFIG_FILES ="))
-                        Line_Analysis_StreamlinkConstants += "CONFIG_FILES = [os.path.join(APPDATA, " & chr(34) & "streamlinkrc" & chr(34) & ")]"
-                    End If
-                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("PLUGINS_DIR =") Then
-                        Line_Analysis_StreamlinkConstants = Line_Analysis_StreamlinkConstants.Remove(Line_Analysis_StreamlinkConstants.IndexOf("PLUGINS_DIR ="))
-                        Line_Analysis_StreamlinkConstants += "PLUGINS_DIR = os.path.join(APPDATA, " & chr(34) & "plugins" & chr(34) & ")"
-                    End If
-                    If WIN32_CHK_READY = True And Line_Analysis_StreamlinkConstants.Contains("else:") Then
-                        WIN32_CHK_READY = False
-                    End If
-
+            Do Until EXTRA_ARGS.ToUpper = "EXIT"
+                Console.WriteLine("")
+                Console.WriteLine("Type another command or EXIT to end:")
+                Console.WriteLine("")
+                EXTRA_ARGS = Console.ReadLine()
+                If EXTRA_ARGS.ToUpper = "EXIT" Then
+                    Environment.Exit(LAST_EXIT_CODE)
+                Else
+                    LaunchStreamlink(EXTRA_ARGS)
                 End If
-                StreamlinkConstants_Final_Modded += Line_Analysis_StreamlinkConstants & vbNewLine
-            Next
-            TextBox_Analysis_StreamlinkConstants.Dispose()
-            IO.File.WriteAllText(Current_EXE_Path & "\Streamlink\streamlink_cli\constants.py", StreamlinkConstants_Final_Modded, Encoding.UTF8)
+            Loop
+        Else
+            Environment.Exit(LAST_EXIT_CODE)
         End If
-
-        If NO_CMD_HINTS = False Then
-            Dim ACTUAL_VER_DATA As String = Current_EXE_Path & "\VERSION.txt"
-            If IO.File.Exists(ACTUAL_VER_DATA) Then
-                ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
-                Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
-            Else
-                Console.WriteLine("[Streamlink for Windows]")
-            End If
-        End If
-
-        Dim info = New ProcessStartInfo(Chr(34) & Current_EXE_Path & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Current_EXE_Path & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & Final_Args)
-        info.UseShellExecute = False
-        ENABLE_MAINPROGRAM_EXIT = False
-        Dim proc = Process.Start(info)
-        proc.WaitForExit()
-        ENABLE_MAINPROGRAM_EXIT = True
-
-        If NO_CMD_HINTS = False Then
-            Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
-        End If
-
-        If NO_CMD_HINTS = False Then
-            If CMD_INVOKED = False Then
-                Console.ReadKey()
-            End If
-        End If
-
-        Environment.Exit(proc.ExitCode)
 
     End Sub
+
+    Function LaunchStreamlink(ByVal InputCommand As String)
+
+        If CMD_INVOKED = False Then
+            Console.Clear()
+        End If
+
+        Try
+            If NO_CMD_HINTS = False Then
+                Dim ACTUAL_VER_DATA As String = Current_EXE_Path & "\VERSION.txt"
+                If IO.File.Exists(ACTUAL_VER_DATA) Then
+                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
+                    Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
+                Else
+                    Console.WriteLine("[Streamlink for Windows]")
+                End If
+            End If
+
+            Dim STREAMLINK_INVOKE_CHK = {"STREAMLINK ", "STREAMLINK.EXE ", "STREAMLINK.BAT "}
+            For Each STREAMLINK_INVOKE_CHK_ As String In STREAMLINK_INVOKE_CHK
+                If InputCommand.ToUpper.StartsWith(STREAMLINK_INVOKE_CHK_) Then
+                    InputCommand = InputCommand.Remove(0, STREAMLINK_INVOKE_CHK_.Length)
+                End If
+            Next
+
+            Dim info = New ProcessStartInfo(Chr(34) & Current_EXE_Path & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Current_EXE_Path & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & InputCommand)
+            info.UseShellExecute = False
+            ENABLE_MAINPROGRAM_EXIT = False
+            Dim proc = Process.Start(info)
+            proc.WaitForExit()
+            ENABLE_MAINPROGRAM_EXIT = True
+
+            If NO_CMD_HINTS = False Then
+                Console.WriteLine("[End of Streamlink for Windows with ExitCode " & proc.ExitCode & "]")
+            End If
+
+            LAST_EXIT_CODE = proc.ExitCode
+        Catch ex As Exception
+            LAST_EXIT_CODE = 1
+            Console.WriteLine("[Streamlink] An error occurred")
+        End Try
+
+    End Function
 
     Sub Console_CancelKeyPress(sender As Object, e As ConsoleCancelEventArgs)
         If ENABLE_MAINPROGRAM_EXIT = False Then
