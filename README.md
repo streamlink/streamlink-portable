@@ -12,7 +12,7 @@ Inside the ZIP you will find two folders:
 A program to build a portable version of Streamlink for Windows.
 
 ### What are the supported platforms?
-Windows Vista SP2 or later with .NET Framework 4.5+.
+Windows 7 SP1 or later with .NET Framework 4.x (4.7 recommended).
 
 ### What can I do with it?
 Build between three flavors:
@@ -20,7 +20,7 @@ Build between three flavors:
 * Standalone EXE: For users who prefer to have all files packed within the executable.
 * Portable BAT: Same as Portable EXE but a batch file is generated instead of an executable.
 
-By default the building source is the <a href="https://github.com/streamlink/streamlink/commits/master">latest available commit</a> (nightly).
+By default the building source is the <a href="https://github.com/streamlink/streamlink/commits/master">latest available commit</a> (nightly) or the <a href="https://github.com/streamlink/streamlink/releases/latest">latest stable</a>.
 <br>
 No system files are modified and you can run it from anywhere (such as flash drive or other external drives).
 
