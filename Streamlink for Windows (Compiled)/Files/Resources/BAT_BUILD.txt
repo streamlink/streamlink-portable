@@ -76,7 +76,7 @@ SETLOCAL EnableDelayedExpansion
 	)
 
 	set ERRORLEVEL=
-	"%~dp0\Python 3.5.2\python.exe" "%~dp0\Streamlink\Streamlink.py" --ffmpeg-ffmpeg "%~dp0\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" --rtmp-rtmpdump "%~dp0\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" --config "%~dp0\streamlinkrc" !STREAMLINK_ARGS! --no-version-check
+	"%~dp0\Python 3.6.3\python.exe" "%~dp0\Streamlink\Streamlink.py" --ffmpeg-ffmpeg "%~dp0\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" --rtmp-rtmpdump "%~dp0\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" --config "%~dp0\streamlinkrc" !STREAMLINK_ARGS! --no-version-check
 	set LAST_EXIT_CODE=!ERRORLEVEL!
 
 	if "!NO_CMD_HINTS!" == "NO" (

@@ -17,11 +17,12 @@ Imports System.Threading
 <Assembly: AssemblyFileVersion("1.0.0.0")>
 
 Module Module1
-    Public Current_EXE_Path As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
+    Public Current_EXE_Path As String = My.Application.Info.DirectoryPath
     Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
     Dim CMD_INVOKED As Boolean = True
     Public NO_CMD_HINTS As Boolean = False
     Public LAST_EXIT_CODE As Integer = 0
+    Public UTF8WithoutBOM = New UTF8Encoding(False)
 
     Sub Main()
         On Error Resume Next
@@ -29,7 +30,6 @@ Module Module1
         AddHandler Console.CancelKeyPress, AddressOf Console_CancelKeyPress
         Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
         Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
-        Current_EXE_Path = System.IO.Path.GetDirectoryName(Current_EXE_Path)
         Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
         Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
 
@@ -48,8 +48,8 @@ Module Module1
             NO_CMD_HINTS = True
         End If
 
-        Console.OutputEncoding = Encoding.UTF8
-        Console.InputEncoding = Encoding.UTF8
+        Console.OutputEncoding = UTF8WithoutBOM
+        Console.InputEncoding = UTF8WithoutBOM
         Dim bufSize As Integer = 4096
         Dim inStream As Stream = Console.OpenStandardInput(bufSize)
         Console.SetIn(New StreamReader(inStream, Console.InputEncoding, False, bufSize))
@@ -112,37 +112,37 @@ Module Module1
         End If
 
         Try
-            Dim Temp_Path_RTV As String = Path.GetTempPath & "\RTV_STREAMLINK_FOR_WINDOWS"
-            Dim Temp_ZIP_Path_RTV As String = Temp_Path_RTV & "\STREAMLINK_RELEASE.zip"
+            Dim Temp_Path_Streamlink As String = Path.GetTempPath & "\Streamlink Standalone"
+            Dim Temp_ZIP_Path_Streamlink As String = Temp_Path_Streamlink & "\STREAMLINK_RELEASE.zip"
 
             Dim Unzip_Required As Boolean = True
             Dim ACTUAL_RANDOM_ID As String = ""
 
-            If IO.Directory.Exists(Temp_Path_RTV) = False Then
-                IO.Directory.CreateDirectory(Temp_Path_RTV) 'Check if path exists
+            If IO.Directory.Exists(Temp_Path_Streamlink) = False Then
+                IO.Directory.CreateDirectory(Temp_Path_Streamlink) 'Check if path exists
             End If
 
-            If IO.Directory.Exists(Temp_Path_RTV) Then
-                Dim Temp_Previous_Ver As String = Temp_Path_RTV & "\VERSION.txt"
-                Dim Temp_Embed_Ver As String = Temp_Path_RTV & "\VERSION_EMBED.txt"
+            If IO.Directory.Exists(Temp_Path_Streamlink) Then
+                Dim Temp_Previous_Ver As String = Temp_Path_Streamlink & "\VERSION.txt"
+                Dim Temp_Embed_Ver As String = Temp_Path_Streamlink & "\VERSION_EMBED.txt"
                 DeleteFileIfExists(Temp_Embed_Ver)
                 Using _fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VERSION.txt")
                     CopyStream(_fileStream, Temp_Embed_Ver)
                 End Using
                 If IO.File.Exists(Temp_Previous_Ver) Then
-                    If IO.File.ReadAllText(Temp_Previous_Ver, Encoding.UTF8) = IO.File.ReadAllText(Temp_Embed_Ver, Encoding.UTF8) Then
+                    If IO.File.ReadAllText(Temp_Previous_Ver, UTF8WithoutBOM) = IO.File.ReadAllText(Temp_Embed_Ver, UTF8WithoutBOM) Then
                         Unzip_Required = False
                     End If
                 End If
-                Dim Temp_Previous_Random_ID As String = Temp_Path_RTV & "\RANDOM_ID.txt"
-                Dim Temp_Embed_Random_ID As String = Temp_Path_RTV & "\RANDOM_ID_EMBED.txt"
+                Dim Temp_Previous_Random_ID As String = Temp_Path_Streamlink & "\RANDOM_ID.txt"
+                Dim Temp_Embed_Random_ID As String = Temp_Path_Streamlink & "\RANDOM_ID_EMBED.txt"
                 DeleteFileIfExists(Temp_Embed_Random_ID)
                 Using _fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("RANDOM_ID.txt")
                     CopyStream(_fileStream, Temp_Embed_Random_ID)
                 End Using
-                ACTUAL_RANDOM_ID = IO.File.ReadAllText(Temp_Embed_Random_ID, Encoding.UTF8)
+                ACTUAL_RANDOM_ID = IO.File.ReadAllText(Temp_Embed_Random_ID, UTF8WithoutBOM)
                 If IO.File.Exists(Temp_Previous_Random_ID) Then
-                    If IO.File.ReadAllText(Temp_Previous_Random_ID, Encoding.UTF8) = IO.File.ReadAllText(Temp_Embed_Random_ID, Encoding.UTF8) Then
+                    If IO.File.ReadAllText(Temp_Previous_Random_ID, UTF8WithoutBOM) = IO.File.ReadAllText(Temp_Embed_Random_ID, UTF8WithoutBOM) Then
                         Unzip_Required = False
                     Else
                         Unzip_Required = True
@@ -156,27 +156,27 @@ Module Module1
                 If NO_CMD_HINTS = False Then
                     Console.WriteLine("[Streamlink] Extracting program ...")
                 End If
-                Kill_All_EXE(Temp_Path_RTV)
-                DeleteDirectoryIfExists(Temp_Path_RTV)
-                IO.Directory.CreateDirectory(Temp_Path_RTV)
+                Kill_All_EXE(Temp_Path_Streamlink)
+                DeleteDirectoryIfExists(Temp_Path_Streamlink)
+                IO.Directory.CreateDirectory(Temp_Path_Streamlink)
                 Using _fileStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("STREAMLINK_RELEASE.zip")
-                    CopyStream(_fileStream, Temp_ZIP_Path_RTV)
+                    CopyStream(_fileStream, Temp_ZIP_Path_Streamlink)
                 End Using
-                NativeUnzipFile(Temp_ZIP_Path_RTV, Temp_Path_RTV)
-                IO.File.Delete(Temp_ZIP_Path_RTV)
-                Unlock_All_EXE(Temp_Path_RTV) 'Try to unblock Streamlink TEMP path
+                NativeUnzipFile(Temp_ZIP_Path_Streamlink, Temp_Path_Streamlink)
+                IO.File.Delete(Temp_ZIP_Path_Streamlink)
+                Unlock_All_EXE(Temp_Path_Streamlink) 'Try to unblock Streamlink TEMP path
                 If NO_CMD_HINTS = False Then
                     Console.WriteLine("[Streamlink] Program successfully extracted")
                 End If
-                IO.File.WriteAllText(Temp_Path_RTV & "\RANDOM_ID.txt", ACTUAL_RANDOM_ID, Encoding.UTF8)
+                IO.File.WriteAllText(Temp_Path_Streamlink & "\RANDOM_ID.txt", ACTUAL_RANDOM_ID, UTF8WithoutBOM)
             End If
 
-            IO.File.WriteAllText(Temp_Path_RTV & "\CUSTOM_APPDATA", Chr(34) & Current_EXE_Path.Replace("\", "/") & Chr(34), Encoding.UTF8) 'Set current PATH in TEMP
+            IO.File.WriteAllText(Temp_Path_Streamlink & "\CUSTOM_APPDATA", Chr(34) & Current_EXE_Path.Replace("\", "/") & Chr(34), UTF8WithoutBOM) 'Set current PATH in TEMP
 
             If NO_CMD_HINTS = False Then
-                Dim ACTUAL_VER_DATA As String = Temp_Path_RTV & "\VERSION.txt"
+                Dim ACTUAL_VER_DATA As String = Temp_Path_Streamlink & "\VERSION.txt"
                 If IO.File.Exists(ACTUAL_VER_DATA) Then
-                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
+                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, UTF8WithoutBOM)
                     Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
                 Else
                     Console.WriteLine("[Streamlink for Windows]")
@@ -190,7 +190,7 @@ Module Module1
                 End If
             Next
 
-            Dim info = New ProcessStartInfo(Chr(34) & Temp_Path_RTV & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Temp_Path_RTV & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Temp_Path_RTV & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Temp_Path_RTV & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & InputCommand)
+            Dim info = New ProcessStartInfo(Chr(34) & Temp_Path_Streamlink & "\Python 3.6.3\python.exe" & Chr(34), Chr(34) & Temp_Path_Streamlink & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Temp_Path_Streamlink & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Temp_Path_Streamlink & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & InputCommand)
             info.UseShellExecute = False
             ENABLE_MAINPROGRAM_EXIT = False
             Dim proc = Process.Start(info)
@@ -252,7 +252,7 @@ Module Module1
                 Next
             Next
         Else
-            Console.WriteLine("The directory does not exist :(")
+            'Console.WriteLine("The directory does not exist :(")
         End If
 
     End Function
@@ -268,7 +268,7 @@ Module Module1
                 FileUnblocker.UnblockFile(childFile.FullName) 'Unlock current .EXE
             Next
         Else
-            Console.WriteLine("The directory does not exist :(")
+            'Console.WriteLine("The directory does not exist :(")
         End If
     End Function
 

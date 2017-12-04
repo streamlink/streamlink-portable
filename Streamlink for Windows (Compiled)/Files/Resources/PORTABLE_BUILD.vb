@@ -15,11 +15,12 @@ Imports System.IO
 
 Module Module1
 
-    Public Current_EXE_Path As String = System.Reflection.Assembly.GetExecutingAssembly().CodeBase
+    Public Current_EXE_Path As String = My.Application.Info.DirectoryPath
     Public ENABLE_MAINPROGRAM_EXIT As Boolean = True
     Dim CMD_INVOKED As Boolean = True
     Public NO_CMD_HINTS As Boolean = False
     Public LAST_EXIT_CODE As Integer = 0
+    Public UTF8WithoutBOM = New UTF8Encoding(False)
 
     Sub Main()
         On Error Resume Next
@@ -27,7 +28,6 @@ Module Module1
         AddHandler Console.CancelKeyPress, AddressOf Console_CancelKeyPress
         Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
         Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
-        Current_EXE_Path = System.IO.Path.GetDirectoryName(Current_EXE_Path)
         Current_EXE_Path = Current_EXE_Path.Replace("file:///", "")
         Current_EXE_Path = Current_EXE_Path.Replace("file:\", "")
 
@@ -46,8 +46,8 @@ Module Module1
             NO_CMD_HINTS = True
         End If
 
-        Console.OutputEncoding = Encoding.UTF8
-        Console.InputEncoding = Encoding.UTF8
+        Console.OutputEncoding = UTF8WithoutBOM
+        Console.InputEncoding = UTF8WithoutBOM
         Dim bufSize As Integer = 4096
         Dim inStream As Stream = Console.OpenStandardInput(bufSize)
         Console.SetIn(New StreamReader(inStream, Console.InputEncoding, False, bufSize))
@@ -113,7 +113,7 @@ Module Module1
             If NO_CMD_HINTS = False Then
                 Dim ACTUAL_VER_DATA As String = Current_EXE_Path & "\VERSION.txt"
                 If IO.File.Exists(ACTUAL_VER_DATA) Then
-                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, Encoding.UTF8)
+                    ACTUAL_VER_DATA = IO.File.ReadAllText(ACTUAL_VER_DATA, UTF8WithoutBOM)
                     Console.WriteLine("[Streamlink for Windows " & ACTUAL_VER_DATA & "]")
                 Else
                     Console.WriteLine("[Streamlink for Windows]")
@@ -127,7 +127,7 @@ Module Module1
                 End If
             Next
 
-            Dim info = New ProcessStartInfo(Chr(34) & Current_EXE_Path & "\Python 3.5.2\python.exe" & Chr(34), Chr(34) & Current_EXE_Path & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & InputCommand)
+            Dim info = New ProcessStartInfo(Chr(34) & Current_EXE_Path & "\Python 3.6.3\python.exe" & Chr(34), Chr(34) & Current_EXE_Path & "\Streamlink\Streamlink.py" & Chr(34) & " --config " & Chr(34) & Current_EXE_Path & "\streamlinkrc" & Chr(34) & " --rtmp-rtmpdump " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\rtmpdump\rtmpdump.exe" & Chr(34) & " --ffmpeg-ffmpeg " & Chr(34) & Current_EXE_Path & "\Streamlink\Dependencies\ffmpeg\ffmpeg.exe" & Chr(34) & " " & InputCommand)
             info.UseShellExecute = False
             ENABLE_MAINPROGRAM_EXIT = False
             Dim proc = Process.Start(info)

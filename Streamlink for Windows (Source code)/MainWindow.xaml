@@ -1,0 +1,53 @@
+﻿<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Streamlink_for_Windows"
+        mc:Ignorable="d"
+        Title="Streamlink for Windows" Height="400" Width="400" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Foreground="White">
+    <Grid Background="#FF6E0A3C" KeyboardNavigation.TabNavigation="None" KeyboardNavigation.ControlTabNavigation="None" KeyboardNavigation.DirectionalNavigation="None">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Background="#4C000000">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Viewbox Margin="9" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <TextBlock x:Name="CurrentTaskIcon" Text="style" Foreground="#FFFE0084" FontFamily="/Streamlink for Windows;component/Resources/#Material Icons"/>
+            </Viewbox>
+            <TextBlock x:Name="CurrentTaskText" Text="Choose a flavor" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" FontSize="18"/>
+        </Grid>
+        <Grid x:Name="Step1Grid" Grid.Row="1" Visibility="Visible">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <local:ButtonWithStyle x:Name="FlavorBtn_PortableEXE" Text="Portable EXE" Height="50" MouseInteractionStyle="True"/>
+                    <local:ButtonWithStyle x:Name="FlavorBtn_StandaloneEXE" Text="Standalone EXE" Height="50" MouseInteractionStyle="True"/>
+                    <local:ButtonWithStyle x:Name="FlavorBtn_PortableBAT" Text="Portable BAT" Height="50" MouseInteractionStyle="True"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+        <Grid x:Name="Step2Grid" Grid.Row="1" Visibility="Collapsed">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <local:ButtonWithStyle x:Name="DownloadBtn_LatestSnapshot" Text="Latest snapshot" Height="50" MouseInteractionStyle="True"/>
+                    <local:ButtonWithStyle x:Name="DownloadBtn_LatestStable" Text="Latest stable" Height="50" MouseInteractionStyle="True"/>
+                    <local:ButtonWithStyle x:Name="DownloadBtn_Custom" Text="Custom" Height="50" MouseInteractionStyle="True"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+        <Grid x:Name="StepLoadingGrid" Grid.Row="1" Visibility="Collapsed">
+            <local:SpinnerIcon x:Name="LoadSpinnerIcon" Icon="access_time" Foreground="#FFF660AB"/>
+        </Grid>
+        <!--<Viewbox Grid.Row="1">
+            <TextBlock Text="play_circle_filled" Foreground="HotPink" FontFamily="/Streamlink for Windows;component/Resources/#Material Icons"/>
+        </Viewbox>-->
+        <Grid Grid.Row="2" Background="#4C000000">
+            <TextBlock x:Name="StatusText" Margin="5,0"  Text="Step 1/3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="18"/>
+        </Grid>
+    </Grid>
+</Window>
