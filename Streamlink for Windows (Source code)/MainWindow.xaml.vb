@@ -728,17 +728,7 @@ Public Class MainWindow
         ' Configure dependencies and imports based on the current project
         Dim DLL_References_List As New List(Of String)
         Dim DLL_Calls_Imports_List As New List(Of String)
-        Dim Projectpath As String = Current_EXE_Path
-        Projectpath = Projectpath.Replace("/", "\")
-        Projectpath = Projectpath.Remove(Projectpath.LastIndexOf("\"))
-        Projectpath = Projectpath.Remove(Projectpath.LastIndexOf("\"))
-        Dim Found_PJ_Path As String = ProjectDependenciesFile
-        If String.IsNullOrEmpty(Found_PJ_Path) Then
-            For Each Possible_PJ_File As String In IO.Directory.GetFiles(Projectpath, "*.vbproj", IO.SearchOption.TopDirectoryOnly)
-                Found_PJ_Path = Possible_PJ_File
-            Next
-        End If
-        Dim analysis_pj As String = IO.File.ReadAllText(Found_PJ_Path, UTF8WithoutBOM)
+        Dim analysis_pj As String = IO.File.ReadAllText(ProjectDependenciesFile, UTF8WithoutBOM)
         For Each line_analysis_pj As String In analysis_pj.Split({ControlChars.Cr, ControlChars.Lf})
             If line_analysis_pj.Contains("<Reference Include=") Then
                 line_analysis_pj = line_analysis_pj.Remove(0, line_analysis_pj.IndexOf(Chr(34)) + 1)
