@@ -16,7 +16,7 @@
             <TextBlock x:Name="IconTB" FontFamily="/Streamlink for Windows;component/Resources/#Material Icons" Text="help" Foreground="#FFFE0084"/>
         </Viewbox>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <TextBlock x:Name="DescriptionTB" Margin="2" Text="Example description" VerticalAlignment="Center" FontSize="20" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+            <TextBlock x:Name="DescriptionTB" Margin="2" Text="Example description" VerticalAlignment="Center" FontSize="20" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"/>
         </ScrollViewer>
         <Grid Grid.Row="1">
             <Ellipse Fill="#4C000000"/>

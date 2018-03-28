@@ -6,6 +6,8 @@ Imports System.Security.Cryptography
 Imports System.CodeDom.Compiler
 Imports System.Text
 Imports System.Text.RegularExpressions
+Imports System.Threading
+Imports System.Globalization
 
 Public Class MainWindow
     Public Shared CodeDomProvider As CodeDomProvider = CodeDomProvider.CreateProvider("VB")
@@ -31,7 +33,8 @@ Public Class MainWindow
 
     Public WithEvents BW_STEPS As New ExtendedBackgroundWorker
     Private Sub MainWindow_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
-
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture
+        Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture
         FocusableProperty.OverrideMetadata(GetType(ContentControl), New FrameworkPropertyMetadata(False, FrameworkPropertyMetadataOptions.[Inherits]))
         IO.Directory.SetCurrentDirectory(Current_EXE_Path)
 
@@ -149,6 +152,7 @@ Public Class MainWindow
                             Step1Grid.Visibility = Visibility.Collapsed
                             Step2Grid.Visibility = Visibility.Collapsed
                             StepLoadingGrid.Visibility = Visibility.Collapsed
+                            StatusHelpViewBox.Visibility = Visibility.Collapsed
                         End Sub)
     End Sub
 
@@ -192,7 +196,7 @@ Public Class MainWindow
                         End Sub)
     End Sub
 
-    Sub GotoLoadingErrorStep()
+    Sub GotoLoadingErrorStep(ByVal Ex As Exception)
         THREADSAFE_CALL(Sub()
                             HideAllSteps()
                             StatusText.Text = StatusText.Text.Remove(StatusText.Text.IndexOf(" ") + 2) & " - Error"
@@ -200,6 +204,10 @@ Public Class MainWindow
                             LoadSpinnerIcon.MouseInteractionStyle = True
                             LoadSpinnerIcon.Icon = "refresh"
                             StepLoadingGrid.Visibility = Visibility.Visible
+
+                            StatusHelpViewBox.Visibility = Visibility.Visible
+                            StatusHelpViewBox.Tag = Ex.ToString
+
                         End Sub)
     End Sub
 
@@ -313,8 +321,8 @@ Public Class MainWindow
                 REQUESTED_STEP = "STEP3"
                 GoToStep3()
 
-            Catch
-                GotoLoadingErrorStep()
+            Catch ex As Exception
+                GotoLoadingErrorStep(ex)
             End Try
         End If
 
@@ -569,8 +577,8 @@ Public Class MainWindow
 
                 GoToStep1()
 
-            Catch
-                GotoLoadingErrorStep()
+            Catch ex As Exception
+                GotoLoadingErrorStep(ex)
             End Try
         End If
 
@@ -854,6 +862,18 @@ Public Class MainWindow
         DATA_Downloader_CurrentProgress = e.ProgressPercentage & "%"
     End Sub
 
+    Private Sub StatusHelpViewBox_MouseEnter(sender As Object, e As MouseEventArgs) Handles StatusHelpViewBox.MouseEnter
+        DirectCast(StatusHelpViewBox.Child, TextBlock).Foreground = CurrentTaskIcon.Foreground
+    End Sub
+
+    Private Sub StatusHelpViewBox_MouseLeave(sender As Object, e As MouseEventArgs) Handles StatusHelpViewBox.MouseLeave
+        DirectCast(StatusHelpViewBox.Child, TextBlock).Foreground = Brushes.White
+    End Sub
+
+    Private Sub StatusHelpViewBox_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles StatusHelpViewBox.MouseUp
+        Clipboard.SetText(StatusHelpViewBox.Tag)
+        MessageBoxDialog_THREADSAFE("Error", "[Copied to clipboard]" & vbNewLine & StatusHelpViewBox.Tag, MessageBoxButton.OK, "error")
+    End Sub
 End Class
 
 Public Class FileUnblocker
