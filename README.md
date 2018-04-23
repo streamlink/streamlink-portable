@@ -12,7 +12,7 @@ Inside the ZIP you will find two folders:
 A program to build a portable version of Streamlink for Windows.
 
 ### What are the supported platforms?
-Windows 7 SP1 or later with .NET Framework 4.x (4.7 recommended).
+Windows 7 SP1 or later with .NET Framework 4.5 or later.
 
 ### What can I do with it?
 Build between three flavors:
