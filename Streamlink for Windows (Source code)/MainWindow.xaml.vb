@@ -38,6 +38,8 @@ Public Class MainWindow
         FocusableProperty.OverrideMetadata(GetType(ContentControl), New FrameworkPropertyMetadata(False, FrameworkPropertyMetadataOptions.[Inherits]))
         IO.Directory.SetCurrentDirectory(Current_EXE_Path)
 
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 'Ensure the use of TLS 1.2 (Required by Github)
+
         'Check write permissions
         If Check_Write_Permissions() = False Then
             MessageBoxDialog_THREADSAFE("Error", "Write permissions are required." & vbNewLine & "Try running the program with administrator rights or from another location.", MessageBoxButton.OK, "error")
@@ -272,20 +274,22 @@ Public Class MainWindow
                 If IO.Directory.Exists("Releases") Then
                     If IO.File.Exists("Releases\VERSION.txt") Then
                         Dim vers_check As String = IO.File.ReadAllText("Releases\VERSION.txt", UTF8WithoutBOM)
-                        If vers_check.Contains(CURRENT_VERSION.Remove(7)) Then
-                            New_Version_Available = False
-                            StopLoadSpinnerIcon()
-                            Dim result_msg As String = "It looks like you already have the latest version."
-                            If SELECTED_DOWNLOAD_SOURCE = "Custom" Then
-                                result_msg = "It looks like you already have this version."
-                            End If
-                            Dim result As Boolean = MessageBoxDialog_THREADSAFE("Notice", result_msg & vbNewLine & "Continue anyway?", MessageBoxButton.YesNo, "help")
-                            If result = True Then
-                                'The user agreed to update anyway
-                                ResumeLoadSpinnerIcon()
-                            Else
-                                GoToStep2()
-                                Return
+                        If CURRENT_VERSION.Length >= 7 Then
+                            If vers_check.Contains(CURRENT_VERSION.Remove(7)) Then
+                                New_Version_Available = False
+                                StopLoadSpinnerIcon()
+                                Dim result_msg As String = "It looks like you already have the latest version."
+                                If SELECTED_DOWNLOAD_SOURCE = "Custom" Then
+                                    result_msg = "It looks like you already have this version."
+                                End If
+                                Dim result As Boolean = MessageBoxDialog_THREADSAFE("Notice", result_msg & vbNewLine & "Continue anyway?", MessageBoxButton.YesNo, "help")
+                                If result = True Then
+                                    'The user agreed to update anyway
+                                    ResumeLoadSpinnerIcon()
+                                Else
+                                    GoToStep2()
+                                    Return
+                                End If
                             End If
                         End If
                     End If
@@ -662,6 +666,7 @@ Public Class MainWindow
 
 
     Function GetETAG_HTTPHEADER(ByVal URL As String) As String
+        On Error Resume Next
         ' Creates an HttpWebRequest with the specified URL. 
         myHttpWebRequest = CType(WebRequest.Create(URL), HttpWebRequest)
         'Set request method
@@ -681,10 +686,10 @@ Public Class MainWindow
                 i = myHttpWebResponse.Headers.Count
             End If
         End While
-        Return ETAG
         myHttpWebRequest.Abort()
         myHttpWebResponse.Close()
         myHttpWebResponse.Dispose()
+        Return ETAG
     End Function
 
     Sub THREADSAFE_CALL(ByVal Funcion As Action)

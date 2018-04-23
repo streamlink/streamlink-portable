@@ -1,6 +1,6 @@
 Requirements:
 -Windows 7 SP1 or later
--.NET Framework 4.x (4.7 recommended) (Not required in Windows 8 or later)
+-.NET Framework 4.5 or later (Not required in Windows 8 or later)
 https://www.microsoft.com/en-us/download/details.aspx?id=55167
 
 Notes:
