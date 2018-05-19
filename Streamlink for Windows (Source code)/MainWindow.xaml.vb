@@ -244,6 +244,15 @@ Public Class MainWindow
                         End Sub)
     End Sub
 
+    Function GetLatestStableVersionString() As String
+        Dim ResultVersion As String = GetCustomHEADHeader("https://github.com/streamlink/streamlink/releases/latest", "Location", False)
+        If ResultVersion.StartsWith("http") Then
+            Return ResultVersion.Remove(0, ResultVersion.LastIndexOf("/") + 1)
+        Else
+            Return ""
+        End If
+    End Function
+
     Private Sub BW_STEPS_DoWork(sender As Object, e As DoWorkEventArgs) Handles BW_STEPS.DoWork
         Cancel_Internet_Interactions()
         Dim REQUESTED_STEP As String = e.Argument
@@ -270,7 +279,7 @@ Public Class MainWindow
                 End If
 
                 Dim Streamlink_URL As String = URL_ZIP_ARCHIVE_CURRENT
-                CURRENT_VERSION = GetETAG_HTTPHEADER(Streamlink_URL)
+                CURRENT_VERSION = GetCustomHEADHeader(Streamlink_URL, "ETag")
                 If IO.Directory.Exists("Releases") Then
                     If IO.File.Exists("Releases\VERSION.txt") Then
                         Dim vers_check As String = IO.File.ReadAllText("Releases\VERSION.txt", UTF8WithoutBOM)
@@ -446,12 +455,31 @@ Public Class MainWindow
                 README_CONTENT = README_CONTENT.Replace("%STREAMLINK_EXEC_FILE%", "Streamlink" & RELEASE_FILE_EXT_CURRENT)
                 IO.File.WriteAllText("Releases\README.txt", README_CONTENT, UTF8WithoutBOM)
 
-                RELEASE_VER_CURRENT = "Releases\Streamlink\streamlink\__init__.py"
-                If IO.File.Exists(RELEASE_VER_CURRENT) Then
+                Dim StreamlinkInitFile As String = "Releases\Streamlink\streamlink\__init__.py"
+                If IO.File.Exists(StreamlinkInitFile) Then
                     Try
-                        RELEASE_VER_CURRENT = IO.File.ReadAllText(RELEASE_VER_CURRENT, UTF8WithoutBOM)
-                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.ToLower.Remove(0, RELEASE_VER_CURRENT.IndexOf("__version__ = ") + 15)
-                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Remove(RELEASE_VER_CURRENT.IndexOf(Chr(34)))
+                        'RELEASE_VER_CURRENT = IO.File.ReadAllText(StreamlinkInitFile, UTF8WithoutBOM)
+                        'RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.ToLower.Remove(0, RELEASE_VER_CURRENT.IndexOf("__version__ = ") + 15)
+                        'RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Remove(RELEASE_VER_CURRENT.IndexOf(Chr(34)))
+
+                        Dim StreamlinkInitFileContent As String = IO.File.ReadAllText(StreamlinkInitFile, UTF8WithoutBOM)
+                        RELEASE_VER_CURRENT = StreamlinkInitFileContent
+                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Remove(0, RELEASE_VER_CURRENT.IndexOf("__version__ = ") + 14)
+                        RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Remove(RELEASE_VER_CURRENT.IndexOf(vbLf))
+                        If RELEASE_VER_CURRENT.StartsWith(Chr(34)) Then
+                            RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Replace(Chr(34), "")
+                        Else
+                            If SELECTED_DOWNLOAD_SOURCE = "Latest snapshot" Or SELECTED_DOWNLOAD_SOURCE = "Latest stable" Then
+                                Dim LatestStableVersionString As String = GetLatestStableVersionString()
+                                Dim RELEASE_VER_OLD_REPLACE As String = "__version__ = " & RELEASE_VER_CURRENT
+                                Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & "@" & CURRENT_VERSION.Remove(7) & Chr(34) & " #" & RELEASE_VER_CURRENT
+                                IO.File.WriteAllText(StreamlinkInitFile, StreamlinkInitFileContent.Replace(RELEASE_VER_OLD_REPLACE, RELEASE_VER_NEW_REPLACE))
+                                RELEASE_VER_CURRENT = LatestStableVersionString
+                            Else
+                                RELEASE_VER_CURRENT = ""
+                            End If
+                        End If
+
                     Catch
                         RELEASE_VER_CURRENT = ""
                     End Try
@@ -664,32 +692,26 @@ Public Class MainWindow
         'Next
     End Sub
 
-
-    Function GetETAG_HTTPHEADER(ByVal URL As String) As String
+    Function GetCustomHEADHeader(URL As String, Header As String, Optional AllowAutoRedirect As Boolean = True) As String
         On Error Resume Next
-        ' Creates an HttpWebRequest with the specified URL. 
         myHttpWebRequest = CType(WebRequest.Create(URL), HttpWebRequest)
-        'Set request method
         myHttpWebRequest.Method = "HEAD"
-        ' Sends the HttpWebRequest and waits for a response.
+        myHttpWebRequest.AllowAutoRedirect = AllowAutoRedirect
         myHttpWebResponse = CType(myHttpWebRequest.GetResponse(), HttpWebResponse)
-        ' Displays all the Headers present in the response received from the URI.
-        'Console.WriteLine(ControlChars.Lf + ControlChars.Cr + "The following headers were received in the response")
-        'The Headers property is a WebHeaderCollection. Use it's properties to traverse the collection and display each header.
         Dim i As Integer
-        Dim ETAG As String = ""
+        Dim HeaderResult As String = ""
         While i < myHttpWebResponse.Headers.Count
             i = i + 1
-            If myHttpWebResponse.Headers.Keys(i) = "ETag" Then
-                ETAG = myHttpWebResponse.Headers(i)
-                ETAG = ETAG.Replace(Chr(34), "")
+            If myHttpWebResponse.Headers.Keys(i) = Header Then
+                HeaderResult = myHttpWebResponse.Headers(i)
+                HeaderResult = HeaderResult.Replace(Chr(34), "")
                 i = myHttpWebResponse.Headers.Count
             End If
         End While
         myHttpWebRequest.Abort()
         myHttpWebResponse.Close()
         myHttpWebResponse.Dispose()
-        Return ETAG
+        Return HeaderResult
     End Function
 
     Sub THREADSAFE_CALL(ByVal Funcion As Action)
