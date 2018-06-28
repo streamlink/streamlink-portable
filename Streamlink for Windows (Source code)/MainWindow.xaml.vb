@@ -420,7 +420,7 @@ Public Class MainWindow
                 Dim argparser_py_location As String = "Files\TEMP\streamlink-master\streamlink_cli\argparser.py"
                 Dim argparser_py As String = IO.File.ReadAllText(argparser_py_location, UTF8WithoutBOM)
                 Dim argparser_py_replace As String = "%(prog)s"
-                Dim argparser_py_replace_end As String = "Streamlink.exe"
+                Dim argparser_py_replace_end As String = "Streamlink" '"Streamlink.exe"
                 argparser_py = argparser_py.Replace(argparser_py_replace, argparser_py_replace_end)
                 IO.File.WriteAllText(argparser_py_location, argparser_py, UTF8WithoutBOM)
 
@@ -472,7 +472,8 @@ Public Class MainWindow
                             If SELECTED_DOWNLOAD_SOURCE = "Latest snapshot" Or SELECTED_DOWNLOAD_SOURCE = "Latest stable" Then
                                 Dim LatestStableVersionString As String = GetLatestStableVersionString()
                                 Dim RELEASE_VER_OLD_REPLACE As String = "__version__ = " & RELEASE_VER_CURRENT
-                                Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & "@" & CURRENT_VERSION.Remove(7) & Chr(34) & " #" & RELEASE_VER_CURRENT
+                                'Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & "@" & CURRENT_VERSION.Remove(7) & Chr(34) & " #" & RELEASE_VER_CURRENT 'Version with GIT tag
+                                Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & Chr(34) & " #" & RELEASE_VER_CURRENT 'Plain version
                                 IO.File.WriteAllText(StreamlinkInitFile, StreamlinkInitFileContent.Replace(RELEASE_VER_OLD_REPLACE, RELEASE_VER_NEW_REPLACE))
                                 RELEASE_VER_CURRENT = LatestStableVersionString
                             Else
