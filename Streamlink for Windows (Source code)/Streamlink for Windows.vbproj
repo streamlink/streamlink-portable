@@ -73,22 +73,36 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Resources\ButtonWithStyle.xaml.vb">
-      <DependentUpon>ButtonWithStyle.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Resources\ExtendedBackgroundWorker.vb">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Resources\InputBoxDialog.xaml.vb">
+    <Compile Include="Resources\RandomPassword.vb" />
+    <Compile Include="RTV Components\ActionBar.xaml.vb">
+      <DependentUpon>ActionBar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\Button.xaml.vb">
+      <DependentUpon>Button.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\FloatingHintTextBox.xaml.vb">
+      <DependentUpon>FloatingHintTextBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\IcoFontTranslator.vb" />
+    <Compile Include="RTV Components\IconHandler.vb" />
+    <Compile Include="RTV Components\IconTextBlock.xaml.vb">
+      <DependentUpon>IconTextBlock.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\InputBoxDialog.xaml.vb">
       <DependentUpon>InputBoxDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Resources\MouseInteractionStyle.vb" />
-    <Compile Include="Resources\RandomPassword.vb" />
-    <Compile Include="Resources\SpinnerIcon.xaml.vb">
-      <DependentUpon>SpinnerIcon.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Resources\MessageBoxDialog.xaml.vb">
+    <Compile Include="RTV Components\MessageBoxDialog.xaml.vb">
       <DependentUpon>MessageBoxDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\MouseInteractionStyle.vb" />
+    <Compile Include="RTV Components\SimpleHintTextBox.xaml.vb">
+      <DependentUpon>SimpleHintTextBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RTV Components\SpinnerIcon.xaml.vb">
+      <DependentUpon>SpinnerIcon.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -102,21 +116,37 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Resources\ButtonWithStyle.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="RTV Components\ActionBar.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
-    <Page Include="Resources\InputBoxDialog.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="RTV Components\Button.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
-    <Page Include="Resources\SpinnerIcon.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="RTV Components\FloatingHintTextBox.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
-    <Page Include="Resources\MessageBoxDialog.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="RTV Components\IconTextBlock.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="RTV Components\InputBoxDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="RTV Components\MessageBoxDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="RTV Components\SimpleHintTextBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="RTV Components\SpinnerIcon.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -166,7 +196,8 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
-    <Resource Include="Resources\MaterialIcons.ttf" />
+    <Resource Include="RTV Components\icofont.ttf" />
+    <Resource Include="RTV Components\MaterialIcons-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

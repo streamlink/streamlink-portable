@@ -12,20 +12,18 @@
             <RowDefinition Height="2"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <Viewbox OpacityMask="#33010000">
-            <TextBlock FontFamily="/Streamlink for Windows;component/Resources/#Material Icons" Text="keyboard" Foreground="#FFFE0084"/>
-        </Viewbox>
+        <local:IconTextBlock OpacityMask="#33010000" Icon="keyboard" Foreground="#FFFE0084"/>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <TextBlock x:Name="DescriptionTB" Text="Example description" VerticalAlignment="Center" FontSize="20" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+            <TextBlock x:Name="DescriptionTB" Text="Example description" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20" TextWrapping="Wrap" TextAlignment="Center"/>
         </ScrollViewer>
         <Ellipse Grid.Row="1" Fill="#4C000000"/>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="ValueTB" FontSize="15" MaxLines="1" BorderBrush="{x:Null}" BorderThickness="0" Background="Transparent" Foreground="White" CaretBrush="White" VerticalContentAlignment="Center" Margin="10,0"/>
-            <local:ButtonWithStyle x:Name="ReturnButton" Icon="check_circle" Grid.Column="1" MouseInteractionStyle="True" Foreground="#FFFE0084"/>
+            <TextBox x:Name="ValueTB" FontSize="15" MaxLines="1" BorderBrush="{x:Null}" BorderThickness="0" Background="Transparent" Foreground="White" CaretBrush="White" VerticalContentAlignment="Center" Margin="10,0,5,0"/>
+            <local:Button x:Name="ReturnButton" Icon="check_circle" Grid.Column="1" MouseInteractionStyle="True" Foreground="#FFCB0567"/>
         </Grid>
     </Grid>
 </Window>

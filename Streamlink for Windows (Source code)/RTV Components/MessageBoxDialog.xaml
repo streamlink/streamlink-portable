@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Streamlink_for_Windows"
+        xmlns:local1="clr-namespace:Streamlink_for_Windows"
         mc:Ignorable="d"
         Title="Example title" Height="250" Width="350" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Foreground="White" ShowInTaskbar="False">
     <Grid Background="#FF6E0A3C" KeyboardNavigation.TabNavigation="None" KeyboardNavigation.ControlTabNavigation="None" KeyboardNavigation.DirectionalNavigation="None">
@@ -12,11 +12,9 @@
             <RowDefinition Height="2"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <Viewbox OpacityMask="#33010000">
-            <TextBlock x:Name="IconTB" FontFamily="/Streamlink for Windows;component/Resources/#Material Icons" Text="help" Foreground="#FFFE0084"/>
-        </Viewbox>
+        <local1:IconTextBlock x:Name="IconTextBlock" OpacityMask="#33010000" Icon="help" Foreground="#FFFE0084"/>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <TextBlock x:Name="DescriptionTB" Margin="2" Text="Example description" VerticalAlignment="Center" FontSize="20" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="DescriptionTB" Margin="2" Text="Example description" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="20" TextWrapping="Wrap" TextAlignment="Center"/>
         </ScrollViewer>
         <Grid Grid.Row="1">
             <Ellipse Fill="#4C000000"/>
@@ -27,12 +25,12 @@
                 <ColumnDefinition Width="2"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <local:ButtonWithStyle x:Name="YesButton" Icon="check_circle" Grid.Column="0" MouseInteractionStyle="True" Foreground="#FFFE0084" Text="Yes" HorizontalContentAlignment="Center"/>
+            <local1:Button x:Name="YesButton" Icon="check_circle" Grid.Column="0" MouseInteractionStyle="True" Foreground="#FFCB0567" Text="Yes" CenterContent="True"/>
             <Ellipse Fill="#4C000000" Grid.Column="1"/>
-            <local:ButtonWithStyle x:Name="NoButton" Icon="cancel" Grid.Column="2" MouseInteractionStyle="True" Foreground="#FFFE0084" Text="No" HorizontalContentAlignment="Center"/>
+            <local1:Button x:Name="NoButton" Icon="cancel" Grid.Column="2" MouseInteractionStyle="True" Foreground="#FFCB0567" Text="No" CenterContent="True"/>
         </Grid>
         <Grid x:Name="SingleReturnGrid" Grid.Row="2">
-            <local:ButtonWithStyle x:Name="OKButton" Icon="check_circle" MouseInteractionStyle="True" Foreground="#FFFE0084" Text="OK" HorizontalContentAlignment="Center"/>
+            <local1:Button x:Name="OKButton" Icon="check_circle" MouseInteractionStyle="True" Foreground="#FFCB0567" Text="OK" CenterContent="True"/>
         </Grid>
     </Grid>
 </Window>

@@ -23,6 +23,7 @@
             .DescriptionTB.Text = Description
             .ValueTB.Text = DefaultValue
             .ValueTB.Focus()
+            .ValueTB.CaretIndex = .ValueTB.Text.Length
             .ShowDialog()
             FinalValue = .ReturnValue
         End With

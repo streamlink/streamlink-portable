@@ -118,7 +118,7 @@ Public Class MainWindow
 
     Private Sub DownloadBtn_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles DownloadBtn_LatestSnapshot.MouseUp
         If BW_STEPS.IsBusy = False Then
-            If sender.text = "Custom" Then
+            If sender.Text.EndsWith("Custom") Then
                 Dim URL_ZIP_ARCHIVE_TEMP As String = InputBoxDialog.OpenDialog("Custom download", "Enter a ZIP archive URL", Me)
                 If String.IsNullOrWhiteSpace(URL_ZIP_ARCHIVE_TEMP) = False Then
                     If URL_ZIP_ARCHIVE_TEMP.ToLower.StartsWith("http") Then
@@ -162,7 +162,7 @@ Public Class MainWindow
         THREADSAFE_CALL(Sub()
                             HideAllSteps()
                             StatusText.Text = "Step 1/3"
-                            CurrentTaskIcon.Text = "style"
+                            CurrentTaskIcon.Icon = "style"
                             CurrentTaskText.Text = "Choose a flavor"
                             Step1Grid.Visibility = Visibility.Visible
                         End Sub)
@@ -171,7 +171,7 @@ Public Class MainWindow
         THREADSAFE_CALL(Sub()
                             HideAllSteps()
                             StatusText.Text = "Step 2/3"
-                            CurrentTaskIcon.Text = "archive"
+                            CurrentTaskIcon.Icon = "archive"
                             CurrentTaskText.Text = "Download source"
                             Step2Grid.Visibility = Visibility.Visible
                         End Sub)
@@ -189,7 +189,7 @@ Public Class MainWindow
     Sub GoToStep3()
         THREADSAFE_CALL(Sub()
                             HideAllSteps()
-                            CurrentTaskIcon.Text = "build"
+                            CurrentTaskIcon.Icon = "build"
                             CurrentTaskText.Text = "Build release"
                             LoadSpinnerIcon.Icon = "settings"
                             LoadSpinnerIcon.Spin = True
@@ -265,11 +265,11 @@ Public Class MainWindow
                 IO.Directory.CreateDirectory("Files\TEMP")
                 Dim New_Version_Available As Boolean = True
 
-                If SELECTED_DOWNLOAD_SOURCE = "Latest snapshot" Then
+                If SELECTED_DOWNLOAD_SOURCE.EndsWith("Latest snapshot") Then
                     URL_ZIP_ARCHIVE_CURRENT = "https://github.com/streamlink/streamlink/archive/master.zip"
                 End If
 
-                If SELECTED_DOWNLOAD_SOURCE = "Latest stable" Then
+                If SELECTED_DOWNLOAD_SOURCE.EndsWith("Latest stable") Then
                     Dim HTML_TMP As String = GetPageHTMLCustom("https://github.com/streamlink/streamlink/releases/latest", UserAgent_3, "")
                     HTML_TMP = HTML_TMP.Remove(0, HTML_TMP.IndexOf("/streamlink/streamlink/archive/"))
                     HTML_TMP = "https://github.com/" & HTML_TMP.Remove(HTML_TMP.IndexOf(Chr(34)))
@@ -288,7 +288,7 @@ Public Class MainWindow
                                 New_Version_Available = False
                                 StopLoadSpinnerIcon()
                                 Dim result_msg As String = "It looks like you already have the latest version."
-                                If SELECTED_DOWNLOAD_SOURCE = "Custom" Then
+                                If SELECTED_DOWNLOAD_SOURCE.EndsWith("Custom") Then
                                     result_msg = "It looks like you already have this version."
                                 End If
                                 Dim result As Boolean = MessageBoxDialog_THREADSAFE("Notice", result_msg & vbNewLine & "Continue anyway?", MessageBoxButton.YesNo, "help")
@@ -436,6 +436,18 @@ Public Class MainWindow
                     DeleteFileIfExists("Files\TEMP\streamlinkrc_BACKUP")
                     IO.File.Copy("Releases\streamlinkrc", "Files\TEMP\streamlinkrc_BACKUP")
                 End If
+
+                'Noob way to skip streamlinkrc.pluginname files (part 1)
+                If IO.Directory.Exists("Releases") Then
+                    For Each File_TMP As String In IO.Directory.GetFiles("Releases", "*.*", SearchOption.TopDirectoryOnly)
+                        If File_TMP.Contains("streamlinkrc") Then
+                            Dim streamlinkrcfilename As String = Path.GetFileName(File_TMP)
+                            DeleteFileIfExists("Files\TEMP\" & streamlinkrcfilename & "_BACKUP")
+                            IO.File.Copy(File_TMP, "Files\TEMP\" & streamlinkrcfilename & "_BACKUP")
+                        End If
+                    Next
+                End If
+
                 If IO.Directory.Exists("Releases\Plugins") Then
                     DeleteDirectoryIfExists("Files\TEMP\Plugins_BACKUP")
                     IO.Directory.Move("Releases\Plugins", "Files\TEMP\Plugins_BACKUP")
@@ -469,11 +481,11 @@ Public Class MainWindow
                         If RELEASE_VER_CURRENT.StartsWith(Chr(34)) Then
                             RELEASE_VER_CURRENT = RELEASE_VER_CURRENT.Replace(Chr(34), "")
                         Else
-                            If SELECTED_DOWNLOAD_SOURCE = "Latest snapshot" Or SELECTED_DOWNLOAD_SOURCE = "Latest stable" Then
+                            If SELECTED_DOWNLOAD_SOURCE.EndsWith("Latest snapshot") Or SELECTED_DOWNLOAD_SOURCE.EndsWith("Latest stable") Then
                                 Dim LatestStableVersionString As String = GetLatestStableVersionString()
                                 Dim RELEASE_VER_OLD_REPLACE As String = "__version__ = " & RELEASE_VER_CURRENT
-                                'Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & "@" & CURRENT_VERSION.Remove(7) & Chr(34) & " #" & RELEASE_VER_CURRENT 'Version with GIT tag
-                                Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & Chr(34) & " #" & RELEASE_VER_CURRENT 'Plain version
+                                Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & "+" & CURRENT_VERSION.Remove(7) & Chr(34) & " #" & RELEASE_VER_CURRENT 'Version with GIT tag
+                                'Dim RELEASE_VER_NEW_REPLACE As String = "__version__ = " & Chr(34) & LatestStableVersionString & Chr(34) & " #" & RELEASE_VER_CURRENT 'Plain version
                                 IO.File.WriteAllText(StreamlinkInitFile, StreamlinkInitFileContent.Replace(RELEASE_VER_OLD_REPLACE, RELEASE_VER_NEW_REPLACE))
                                 RELEASE_VER_CURRENT = LatestStableVersionString
                             Else
@@ -541,24 +553,24 @@ Public Class MainWindow
                     IO.File.Move("Releases\Streamlink\LICENSE.txt", "Releases\LICENSE.txt")
                 End If
 
-                If SELECTED_FLAVOR = "Portable BAT" Then
+                If SELECTED_FLAVOR.EndsWith("Portable BAT") Then
                     IO.File.Copy("Files\Resources\BAT_BUILD.txt", "Releases\Streamlink.bat", True)
                     DeleteDirectoryIfExists("Releases\TEMP_COMPILE_FILES")
                     DeleteFileIfExists("Releases\TEMP_COMPILE.vb")
                 End If
 
-                If SELECTED_FLAVOR = "Portable EXE" Then
+                If SELECTED_FLAVOR.EndsWith("Portable EXE") Then
                     CompileCode(CodeDomProvider, "Files\Resources\PORTABLE_BUILD.vb", "Releases\Streamlink.exe", "PORTABLE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
                     DeleteDirectoryIfExists("Releases\TEMP_COMPILE_FILES")
                     DeleteFileIfExists("Releases\TEMP_COMPILE.vb")
                 End If
 
-                If SELECTED_FLAVOR = "Standalone EXE" Then
+                If SELECTED_FLAVOR.EndsWith("Standalone EXE") Then
                     RunAndWait("Files\7zip\7za.exe", "a " & Chr(34) & Current_EXE_Path & "\Releases\Streamlink_Release.zip" & Chr(34) & " " & Chr(34) & Current_EXE_Path & "\Releases\*" & Chr(34)) 'Si hay que comprimir
                     CompileCode(CodeDomProvider, "Files\Resources\STANDALONE_BUILD.vb", "Releases\Streamlink.exe", "STANDALONE_EXE", "Files\Resources\BUILD_DEPENDENCIES.txt")
 
                     For Each File_TMP As String In IO.Directory.GetFiles("Releases", "*.*", SearchOption.TopDirectoryOnly)
-                        If (File_TMP.EndsWith("Streamlink.exe") Or File_TMP.EndsWith("LICENSE.txt") Or File_TMP.EndsWith("README.txt") Or File_TMP.EndsWith("VERSION.txt") Or File_TMP.EndsWith("streamlinkrc")) = False Then
+                        If (File_TMP.EndsWith("Streamlink.exe") Or File_TMP.EndsWith("LICENSE.txt") Or File_TMP.EndsWith("README.txt") Or File_TMP.EndsWith("VERSION.txt") Or File_TMP.Contains("streamlinkrc")) = False Then
                             IO.File.Delete(File_TMP)
                         End If
                     Next
@@ -571,11 +583,24 @@ Public Class MainWindow
 
                 If IO.File.Exists("Files\TEMP\streamlinkrc_BACKUP") Then
                     FileSystem.Rename("Releases\streamlinkrc", "Releases\streamlinkrc_ORIGINAL")
+                    DeleteFileIfExists("Releases\streamlinkrc")
                     IO.File.Move("Files\TEMP\streamlinkrc_BACKUP", "Releases\streamlinkrc")
                     If getFileMD5("Releases\streamlinkrc") = getFileMD5("Releases\streamlinkrc_ORIGINAL") Then
                         IO.File.Delete("Releases\streamlinkrc_ORIGINAL")
                     End If
                 End If
+
+                'Noob way to skip streamlinkrc.pluginname files (part 2)
+                If IO.Directory.Exists("Files\TEMP") Then
+                    For Each File_TMP As String In IO.Directory.GetFiles("Files\TEMP", "*.*", SearchOption.TopDirectoryOnly)
+                        If File_TMP.Contains("streamlinkrc") Then
+                            Dim streamlinkrcfilename As String = Path.GetFileName(File_TMP)
+                            DeleteFileIfExists("Releases\" & streamlinkrcfilename.Remove(streamlinkrcfilename.Length - 7))
+                            IO.File.Move(File_TMP, "Releases\" & streamlinkrcfilename.Remove(streamlinkrcfilename.Length - 7))
+                        End If
+                    Next
+                End If
+
                 If IO.Directory.Exists("Files\TEMP\Plugins_BACKUP") Then
                     IO.Directory.Move("Files\TEMP\Plugins_BACKUP", "Releases\Plugins")
                 Else
@@ -891,11 +916,11 @@ Public Class MainWindow
     End Sub
 
     Private Sub StatusHelpViewBox_MouseEnter(sender As Object, e As MouseEventArgs) Handles StatusHelpViewBox.MouseEnter
-        DirectCast(StatusHelpViewBox.Child, TextBlock).Foreground = CurrentTaskIcon.Foreground
+        StatusHelpViewBox.Foreground = CurrentTaskIcon.Foreground
     End Sub
 
     Private Sub StatusHelpViewBox_MouseLeave(sender As Object, e As MouseEventArgs) Handles StatusHelpViewBox.MouseLeave
-        DirectCast(StatusHelpViewBox.Child, TextBlock).Foreground = Brushes.White
+        StatusHelpViewBox.Foreground = Brushes.White
     End Sub
 
     Private Sub StatusHelpViewBox_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles StatusHelpViewBox.MouseUp

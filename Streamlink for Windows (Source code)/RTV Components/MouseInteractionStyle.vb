@@ -1,8 +1,14 @@
-﻿Public Class MouseInteractionStyle
+﻿Imports System.Windows.Threading
+
+Public Class MouseInteractionStyle
 
     Dim GlowEffects As Boolean = True
+    Dim ChildWindowPartialFix As Boolean = True 'Partial fix for MouseLeave event in child window (WPF bug)
+    Dim WithEvents MouseLeaveTimer As New DispatcherTimer
+    Dim LatestMouseEnterObject As Object
+    '
 
-    Public Function AddStyle(ByVal Destination As UIElement)
+    Function AddStyle(ByVal Destination As UIElement)
         RemoveStyle(Destination)
         AddHandler Destination.MouseEnter, AddressOf MouseInteractionStyle_MouseEnter
         AddHandler Destination.MouseLeave, AddressOf MouseInteractionStyle_MouseLeave
@@ -21,6 +27,11 @@
     End Function
 
     Sub MouseInteractionStyle_MouseMove(sender As Object, e As MouseEventArgs)
+        If ChildWindowPartialFix = True Then
+            If LatestMouseEnterObject Is Nothing Then
+                StartMouseLeaveTimer(sender)
+            End If
+        End If
         If GlowEffects = False Then
             MouseInteractionStyle_MouseEnter(sender, e)
             RemoveHandler DirectCast(sender, UIElement).MouseMove, AddressOf MouseInteractionStyle_MouseMove
@@ -44,6 +55,10 @@
     End Sub
 
     Sub MouseInteractionStyle_MouseEnter(sender As Object, e As MouseEventArgs)
+        If ChildWindowPartialFix = True Then
+            StartMouseLeaveTimer(sender)
+        End If
+
         If e.LeftButton = MouseButtonState.Pressed Then
             MouseInteractionStyle_MouseDown(sender, e)
         Else
@@ -51,6 +66,8 @@
         End If
     End Sub
     Sub MouseInteractionStyle_MouseLeave(sender As Object, e As MouseEventArgs)
+        LatestMouseEnterObject = Nothing
+        MouseLeaveTimer.Stop()
         sender.Background = Brushes.Transparent
     End Sub
     Sub MouseInteractionStyle_MouseDown(sender As Object, e As MouseEventArgs)
@@ -61,6 +78,47 @@
         End If
     End Sub
     Sub MouseInteractionStyle_MouseUp(sender As Object, e As MouseEventArgs)
-        MouseInteractionStyle_MouseEnter(sender, e)
+        If sender.Background Is Brushes.Transparent = False Then
+            MouseInteractionStyle_MouseEnter(sender, e)
+        End If
     End Sub
+
+    Sub StartMouseLeaveTimer(sender As Object)
+        If Window.GetWindow(sender).Owner IsNot Nothing Then
+            LatestMouseEnterObject = sender
+            MouseLeaveTimer.Interval = New TimeSpan(0, 0, 1)
+            MouseLeaveTimer.Start()
+        End If
+    End Sub
+
+    Private Sub MouseLeaveTimer_Tick(sender As Object, e As EventArgs) Handles MouseLeaveTimer.Tick
+        Try
+            Dim CurrentMousePosition = GetMousePosition()
+            Dim RelativeMousePosition = LatestMouseEnterObject.PointFromScreen(CurrentMousePosition)
+            If (RelativeMousePosition.X >= 0) And (RelativeMousePosition.Y >= 0) Then
+                If (RelativeMousePosition.X <= LatestMouseEnterObject.ActualWidth) And (RelativeMousePosition.Y <= LatestMouseEnterObject.ActualHeight) Then
+                    Return
+                End If
+            End If
+            MouseInteractionStyle_MouseLeave(LatestMouseEnterObject, New MouseEventArgs(Mouse.PrimaryDevice, 0))
+        Catch
+            If LatestMouseEnterObject Is Nothing Then
+                MouseLeaveTimer.Stop()
+            End If
+        End Try
+    End Sub
+
+    'Get global mouse position
+    Friend Declare Function GetCursorPos Lib "user32.dll" (ByRef pt As Win32Point) As Boolean
+    Structure Win32Point
+        Public X As Int32
+        Public Y As Int32
+    End Structure
+    Public Shared Function GetMousePosition() As Point
+        Dim w32Mouse As Win32Point = New Win32Point
+        GetCursorPos(w32Mouse)
+        Return New Point(w32Mouse.X, w32Mouse.Y)
+    End Function
+    '
+
 End Class

@@ -40,7 +40,7 @@
                 .YesButton.Text = "OK"
                 .NoButton.Text = "Cancel"
             End If
-            .IconTB.Text = Icon
+            .IconTextBlock.Icon = Icon
             .ShowDialog()
             FinalValue = .ReturnAccepted
         End With

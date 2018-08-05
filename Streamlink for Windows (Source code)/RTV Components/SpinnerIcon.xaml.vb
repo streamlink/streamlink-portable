@@ -33,7 +33,7 @@ Public Class SpinnerIcon
     End Property
     Private Shared Sub IconChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
         Dim MeInvoke = DirectCast(d, SpinnerIcon)
-        MeInvoke.SpinnerTextBlock.Text = e.NewValue
+        MeInvoke.SpinnerTextBlock.Icon = e.NewValue
     End Sub
     '
     'Spin Property
@@ -48,7 +48,7 @@ Public Class SpinnerIcon
     End Property
     Private Shared Sub SpinChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
         Dim MeInvoke = DirectCast(d, SpinnerIcon)
-        Dim SpinnerStoryBoard As Storyboard = DirectCast(MeInvoke.SpinnerTextBlock.Resources("SpinnerStoryBoard"), Storyboard)
+        Dim SpinnerStoryBoard As Storyboard = DirectCast(MeInvoke.Resources("SpinnerStoryBoard"), Storyboard)
         If e.NewValue = True Then
             SpinnerStoryBoard.Begin()
         Else
@@ -56,4 +56,14 @@ Public Class SpinnerIcon
         End If
     End Sub
     '
+
+    Sub New()
+        InitializeComponent()
+        'Handle default properties values
+        MouseInteractionStyleChanged(Me, New DependencyPropertyChangedEventArgs(MouseInteractionStyleProperty, Nothing, MouseInteractionStyleProperty.DefaultMetadata.DefaultValue))
+        IconChanged(Me, New DependencyPropertyChangedEventArgs(IconProperty, Nothing, IconProperty.DefaultMetadata.DefaultValue))
+        SpinChanged(Me, New DependencyPropertyChangedEventArgs(SpinProperty, Nothing, SpinProperty.DefaultMetadata.DefaultValue))
+        '
+    End Sub
+
 End Class

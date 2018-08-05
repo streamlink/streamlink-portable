@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="FloatingHintTextBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Streamlink_for_Windows"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="300" FontSize="20">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="HintText" Visibility="Collapsed" FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=FontSize}">
+            <TextBlock.RenderTransform>
+                <ScaleTransform ScaleX="0.75"  ScaleY="0.75" />
+            </TextBlock.RenderTransform>
+        </TextBlock>
+        <local:SimpleHintTextBox x:Name="SimpleHintTextBox" Grid.Row="1" FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=FontSize}"/>
+    </Grid>
+</UserControl>

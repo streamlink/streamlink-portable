@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="SimpleHintTextBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Streamlink_for_Windows"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="300" FontSize="20">
+    <Grid>
+        <TextBox x:Name="HintText" Background="Transparent" Focusable="False" Foreground="Gray" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Center" IsReadOnly="True" IsReadOnlyCaretVisible="False" SelectionBrush="{x:Null}" FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=FontSize}" BorderBrush="{x:Null}" BorderThickness="0"/>
+        <TextBox x:Name="TextBox" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=Foreground}" FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=FontSize}" BorderBrush="{x:Null}" BorderThickness="0" CaretBrush="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Control}, Path=Foreground}"/>
+    </Grid>
+</UserControl>
