@@ -203,6 +203,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Win32ConstantsUntouched.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Win32ConstantsPatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="Streamlink Logo.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

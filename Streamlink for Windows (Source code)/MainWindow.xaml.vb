@@ -13,7 +13,7 @@ Public Class MainWindow
     Public Shared CodeDomProvider As CodeDomProvider = CodeDomProvider.CreateProvider("VB")
     Public Shared Current_EXE_Path As String = My.Application.Info.DirectoryPath
     Dim WithEvents DATA_Downloader As New WebClient()
-    Dim DATA_Downloader_CurrentProgress As String = "0%"
+    Dim DATA_Downloader_CurrentProgress As String = ""
     Dim UserAgent_1 As String = "Mozilla/5.0 (Android; Mobile; rv:30.0) Gecko/30.0 Firefox/30.0" 'Android (Mobile)
     Dim UserAgent_2 As String = "Dalvik/1.6.0 (Linux; U; Android 4.4.2; TegraNote-P1640 Build/KOT49H)" 'Android (Tablet)
     Dim UserAgent_3 As String = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0" 'Windows (Desktop)
@@ -325,9 +325,14 @@ Public Class MainWindow
                     'DATA_Downloader.DownloadFile(Streamlink_URL, "Files\TEMP\Streamlink_Latest.zip")
 
                     DATA_Downloader.DownloadFileTaskAsync(Streamlink_URL, "Files\TEMP\Streamlink_Latest.zip")
+                    DATA_Downloader_CurrentProgress = ""
                     Do Until DATA_Downloader.IsBusy = False
                         Threading.Thread.Sleep(500)
-                        UpdateStatusText("Step 2 - Downloading (" & DATA_Downloader_CurrentProgress & ")")
+                        If String.IsNullOrWhiteSpace(DATA_Downloader_CurrentProgress) Then
+                            UpdateStatusText("Step 2 - Downloading")
+                        Else
+                            UpdateStatusText("Step 2 - Downloading (" & DATA_Downloader_CurrentProgress & ")")
+                        End If
                     Loop
 
                 End If
@@ -427,6 +432,25 @@ Public Class MainWindow
                 compressed_path = Chr(34) & Current_EXE_Path & "\Files\Resources\Streamlink_Patches.zip" & Chr(34)
                 compressed_destination = Chr(34) & Current_EXE_Path & "\Files\TEMP\streamlink-master" & Chr(34)
                 RunAndWait("Files\7zip\7za.exe", "-y x " & compressed_path & " -o" & compressed_destination) 'Si hay que descomprimir
+
+                'Dynamically patch Streamlink constants
+                Dim StreamlinkConstants_L As String = "Files\TEMP\streamlink-master\streamlink_cli\constants.py"
+                Dim Win32ConstantsUntouched_L As String = "Files\TEMP\streamlink-master\streamlink_cli\Win32ConstantsUntouched.txt"
+                Dim Win32ConstantsPatch_L As String = "Files\TEMP\streamlink-master\streamlink_cli\Win32ConstantsPatch.txt"
+                Dim StreamlinkConstants As String = NormalizeLineBreaks(IO.File.ReadAllText(StreamlinkConstants_L, UTF8WithoutBOM))
+                Dim Win32ConstantsUntouched As String = NormalizeLineBreaks(IO.File.ReadAllText(Win32ConstantsUntouched_L, UTF8WithoutBOM))
+                Dim Win32ConstantsPatch As String = NormalizeLineBreaks(IO.File.ReadAllText(Win32ConstantsPatch_L, UTF8WithoutBOM))
+                If StreamlinkConstants.Contains(Win32ConstantsUntouched) Then
+                    StreamlinkConstants = StreamlinkConstants.Replace(Win32ConstantsUntouched, Win32ConstantsPatch)
+                    IO.File.WriteAllText(StreamlinkConstants_L, StreamlinkConstants)
+                Else
+                    StopLoadSpinnerIcon()
+                    MessageBoxDialog_THREADSAFE("Warning", "Constants couldn't be patched." & vbNewLine & "Check for builder updates or report the issue.", MessageBoxButton.OK, "warning")
+                    ResumeLoadSpinnerIcon()
+                End If
+                IO.File.Delete(Win32ConstantsUntouched_L)
+                IO.File.Delete(Win32ConstantsPatch_L)
+                '
 
                 UpdateStatusText("Step 3 - Loading (2/3)")
 
@@ -641,6 +665,10 @@ Public Class MainWindow
         End If
 
     End Sub
+
+    Function NormalizeLineBreaks(Input As String) As String
+        Return Regex.Replace(Input, "\r\n?|\n", vbNewLine)
+    End Function
 
     Sub ChangeObjectVisibility_THREADSAFE(ByVal Req_Object As Object, ByVal Visibility As Boolean)
         THREADSAFE_CALL(Sub()
@@ -912,8 +940,18 @@ Public Class MainWindow
     End Function
 
     Private Sub DATA_Downloader_DownloadProgressChanged(sender As Object, e As DownloadProgressChangedEventArgs) Handles DATA_Downloader.DownloadProgressChanged
-        DATA_Downloader_CurrentProgress = e.ProgressPercentage & "%"
+        If e.TotalBytesToReceive <= 0 Then
+            DATA_Downloader_CurrentProgress = BytesToMegabytes(e.BytesReceived) & " MB"
+        Else
+            DATA_Downloader_CurrentProgress = e.ProgressPercentage & "%"
+        End If
     End Sub
+
+    Public Function BytesToMegabytes(Bytes As Double) As Double
+        Dim dblAns As Double
+        dblAns = (Bytes / 1024) / 1024
+        Return Format(dblAns, "###,###,##0.00")
+    End Function
 
     Private Sub StatusHelpViewBox_MouseEnter(sender As Object, e As MouseEventArgs) Handles StatusHelpViewBox.MouseEnter
         StatusHelpViewBox.Foreground = CurrentTaskIcon.Foreground

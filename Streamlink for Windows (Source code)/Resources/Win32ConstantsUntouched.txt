@@ -1,0 +1,3 @@
+    APPDATA = os.environ["APPDATA"]
+    CONFIG_FILES = [os.path.join(APPDATA, "streamlink", "streamlinkrc")]
+    PLUGINS_DIR = os.path.join(APPDATA, "streamlink", "plugins")
