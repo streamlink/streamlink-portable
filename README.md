@@ -1,3 +1,11 @@
+# STREAMLINK PORTABLE IS UNMAINTAINED
+
+**Please see the Streamlink documentation for the available installation methods:**
+
+https://streamlink.github.io/latest/install.html
+
+----
+
 # Download:
 
 You can get the latest git archive <a href="https://github.com/streamlink/streamlink-portable/archive/master.zip">here</a>.
